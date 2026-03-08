@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>DSM</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0a0e14; --surface:#111720; --surface2:#1a2230; --border:#1e2d40;
+  --accent:#f5a623; --text:#d4dde8; --dim:#5a7a9a;
+  --green:#3ecf8e; --red:#ff4d4d; --blue:#3b9eff;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --display:'Bebas Neue',sans-serif;
+  --nav-h:64px; --header-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+
+/* HEADER */
+.header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:10;}
+.logo h1{font-family:var(--display);font-size:1.9rem;color:var(--accent);letter-spacing:2px;line-height:1;}
+.logo-sub{font-family:var(--mono);font-size:0.52rem;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;}
+.header-date{font-family:var(--mono);font-size:0.62rem;color:var(--dim);text-align:right;}
+.status-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SCROLL */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h)+16px);}
+
+/* BOTTOM NAV */
+.bottom-nav{height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--dim);cursor:pointer;font-family:var(--mono);font-size:0.52rem;letter-spacing:0.5px;text-transform:uppercase;padding:8px 4px;transition:color .2s;}
+.nav-item .ni{font-size:1.3rem;line-height:1;}
+.nav-item.active{color:var(--accent);}
+
+/* PANELS */
+.panel{display:none;padding:16px;}
+.panel.active{display:block;}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-label{font-family:var(--mono);font-size:0.52rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;line-height:1.3;}
+.stat-value{font-family:var(--display);font-size:2.2rem;color:var(--text);line-height:1;}
+.stat-sub{font-family:var(--mono);font-size:0.58rem;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* SECTION TITLE */
+.sec-title{font-family:var(--display);font-size:1.1rem;letter-spacing:2px;color:var(--accent);margin-bottom:12px;margin-top:20px;display:flex;align-items:center;gap:10px;}
+.sec-title:first-child{margin-top:0;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.form-group label{font-family:var(--mono);font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);}
+.form-group input,.form-group select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:1rem;padding:13px 14px;outline:none;border-radius:4px;width:100%;-webkit-appearance:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+.form-group input[readonly]{background:var(--bg);color:var(--accent);cursor:default;}
+.form-group input.ga[readonly]{color:var(--green);}
+select option{background:var(--surface2);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* BUTTONS */
+.btn{font-family:var(--mono);font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;padding:14px 20px;border:none;cursor:pointer;border-radius:4px;transition:all .2s;width:100%;display:block;text-align:center;}
+.btn+.btn{margin-top:8px;}
+.btn-primary{background:var(--accent);color:#000;font-weight:600;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,77,77,.3);}
+.btn-export{background:var(--surface2);color:var(--green);border:1px solid rgba(62,207,142,.3);}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+
+/* BLOCK CARD */
+.block-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:12px;}
+.block-title{font-family:var(--mono);font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.block-title.orange{color:var(--accent);}
+.block-title.green{color:var(--green);}
+
+/* PROJECT CARD */
+.project-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:10px;}
+.pc-name{font-family:var(--display);font-size:1.3rem;letter-spacing:1px;color:var(--text);margin-bottom:10px;}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.meta-item{display:flex;flex-direction:column;gap:2px;}
+.ml{font-family:var(--mono);font-size:0.52rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+.mv{font-family:var(--mono);font-size:0.82rem;color:var(--text);}
+.mv.o{color:var(--accent);}
+.mv.g{color:var(--green);}
+.mv.r{color:var(--red);}
+.prog-wrap{background:var(--bg);border:1px solid var(--border);height:6px;border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.prog-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s;}
+.prog-bar.g{background:var(--green);}
+.prog-pct{font-family:var(--mono);font-size:0.58rem;color:var(--dim);margin-bottom:12px;}
+.card-actions{display:flex;gap:8px;}
+.card-actions .btn{padding:10px 14px;font-size:0.65rem;}
+
+/* RECORD CARD */
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;margin-bottom:8px;}
+.rec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.rec-proj{font-family:var(--mono);font-size:0.78rem;color:var(--text);font-weight:600;}
+.rec-stats{display:flex;gap:14px;flex-wrap:wrap;}
+.rec-stat{display:flex;flex-direction:column;gap:1px;}
+.rsl{font-family:var(--mono);font-size:0.52rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+.rsv{font-family:var(--mono);font-size:0.78rem;}
+.rsv.g{color:var(--green);}
+.rsv.o{color:var(--accent);}
+
+/* DASH TABLE */
+.dash-table{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.dash-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(30,45,64,.5);gap:10px;}
+.dash-row:last-child{border-bottom:none;}
+.dr-num{font-family:var(--mono);font-size:0.62rem;color:var(--dim);min-width:18px;}
+.dr-name{font-family:var(--mono);font-size:0.78rem;color:var(--text);flex:1;}
+.dr-name span{display:block;font-size:0.58rem;color:var(--dim);margin-top:2px;}
+.dr-pct{font-family:var(--display);font-size:1.3rem;color:var(--accent);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--dim);font-family:var(--mono);font-size:0.75rem;}
+.ei{font-size:2.5rem;margin-bottom:10px;opacity:.3;}
+
+/* NOTIF */
+.notif{position:fixed;bottom:calc(var(--nav-h)+12px);left:12px;right:12px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:0.8rem;padding:12px 16px;border-radius:4px;z-index:9999;animation:slideUp .3s ease;text-align:center;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.row-between .sec-title{margin:0;flex:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">
+      <h1>DSM</h1>
+      <div class="logo-sub">Derin Zemin Karıştırma</div>
+    </div>
+    <div class="header-date">
+      <div><span class="status-dot"></span>AKTİF</div>
+      <div id="currentDate"></div>
+    </div>
+  </div>
+
+  <div class="content" id="main-content">
+
+    <!-- ANA PANEL -->
+    <div class="panel active" id="tab-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Toplam Kuyu</div>
+          <div class="stat-value" id="dash-total-wells">0</div>
+          <div class="stat-sub">tüm projeler</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Proje Sayısı</div>
+          <div class="stat-value" id="dash-project-count">0</div>
+          <div class="stat-sub">kayıtlı</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Tamamlanan</div>
+          <div class="stat-value" id="dash-completed-wells">0</div>
+          <div class="stat-sub" id="dash-completed-sub">son proje</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Kalan Kuyu</div>
+          <div class="stat-value" id="dash-remaining-wells">0</div>
+          <div class="stat-sub" id="dash-remaining-sub">son proje</div>
+        </div>
+      </div>
+
+      <div class="sec-title">SON PROJE</div>
+      <div id="last-project-summary"><div class="empty-state"><div class="ei">📁</div>Henüz proje eklenmedi.</div></div>
+
+      <div class="divider"></div>
+      <div class="row-between">
+        <div class="sec-title">TÜM PROJELER</div>
+        <button class="btn btn-export" style="width:auto;padding:8px 14px;font-size:0.65rem;margin-left:10px;" onclick="exportAllPDF()">↓ PDF</button>
+      </div>
+      <div id="all-projects-list"><div class="empty-state"><div class="ei">📋</div>Proje bulunmuyor.</div></div>
+    </div>
+
+    <!-- PROJELER -->
+    <div class="panel" id="tab-projects">
+      <div class="sec-title">YENİ PROJE</div>
+      <div class="form-group">
+        <label>Firma Adı</label>
+        <input type="text" id="p-company" placeholder="Firma adını girin" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Proje Tarihi</label>
+          <input type="date" id="p-date" onchange="calcElapsed()">
+        </div>
+        <div class="form-group">
+          <label>Geçen Süre</label>
+          <input type="text" id="p-elapsed" readonly placeholder="Otomatik">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kuyu Başına Çimento (kg)</label>
+          <input type="number" id="p-cement-per-well" placeholder="kg" inputmode="numeric" oninput="calcProjectCement()">
+        </div>
+        <div class="form-group">
+          <label>Kuyu Sayısı</label>
+          <input type="number" id="p-well-count" placeholder="Adet" inputmode="numeric" oninput="calcProjectCement()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Toplam Proje Çimentosu (otomatik)</label>
+        <input type="text" id="p-total-cement" readonly class="ga" placeholder="Otomatik hesaplanır">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addProject()">+ Proje Ekle</button>
+        <button class="btn btn-secondary" onclick="clearProjectForm()">Temizle</button>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-title">PROJELERİM</div>
+      <div id="project-list-panel"><div class="empty-state"><div class="ei">📁</div>Henüz proje eklenmedi.</div></div>
+    </div>
+
+    <!-- GÜNLÜK VERİ -->
+    <div class="panel" id="tab-daily">
+      <div class="sec-title">GÜNLÜK GİRİŞ</div>
+      <div class="form-group">
+        <label>Proje Seç</label>
+        <select id="d-project"><option value="">— Proje seçin —</option></select>
+      </div>
+      <div class="block-card">
+        <div class="block-title orange">⛏ Tamamlanan Kuyu</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Kuyu Sayısı</label>
+            <input type="number" id="d-wells" placeholder="Adet" inputmode="numeric" min="1">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Tarih</label>
+            <input type="date" id="d-wells-date">
+          </div>
+        </div>
+      </div>
+      <div class="block-card">
+        <div class="block-title green">🚛 Silo Kamyon Çimento</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Miktar (kg)</label>
+            <input type="number" id="d-silo-cement" placeholder="kg" inputmode="numeric" min="0">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Tarih</label>
+            <input type="date" id="d-silo-date">
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addDailyRecord()">+ Kaydet</button>
+        <button class="btn btn-secondary" onclick="clearDailyForm()">Temizle</button>
+      </div>
+    </div>
+
+    <!-- KAYITLAR -->
+    <div class="panel" id="tab-records">
+      <div class="row-between">
+        <div class="sec-title">KAYITLAR</div>
+        <button class="btn btn-export" style="width:auto;padding:8px 14px;font-size:0.65rem;margin-left:10px;" onclick="exportRecordsPDF()">↓ PDF</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Projeye Göre Filtrele</label>
+        <select id="filter-project" onchange="renderRecords()"><option value="">Tüm Projeler</option></select>
+      </div>
+      <div id="records-list"><div class="empty-state"><div class="ei">📊</div>Kayıt bulunmuyor.</div></div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('dashboard',this)">
+      <span class="ni">📊</span><span>Ana Panel</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('projects',this)">
+      <span class="ni">📁</span><span>Projeler</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('daily',this)">
+      <span class="ni">✏️</span><span>Veri Giriş</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('records',this)">
+      <span class="ni">📋</span><span>Kayıtlar</span>
+    </button>
+  </div>
+</div>
+
+<div id="notif" style="display:none;" class="notif"></div>
+
+<script>
+var projects = JSON.parse(localStorage.getItem('dsm_projects') || '[]');
+var dailyRecords = JSON.parse(localStorage.getItem('dsm_records') || '[]');
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('currentDate').textContent = formatDate(new Date());
+  refreshAll();
+});
+
+function save() {
+  localStorage.setItem('dsm_projects', JSON.stringify(projects));
+  localStorage.setItem('dsm_records', JSON.stringify(dailyRecords));
+}
+function refreshAll() {
+  populateDropdowns(); renderProjectList(); renderRecords(); renderDashboard();
+}
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('main-content').scrollTop = 0;
+  if(name==='records') renderRecords();
+  if(name==='dashboard') renderDashboard();
+}
+function formatDate(d) {
+  var date = d instanceof Date ? d : new Date(d);
+  return date.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function formatDateFull(d) {
+  var date = d instanceof Date ? d : new Date(d);
+  return date.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+}
+function notify(msg, color) {
+  var n = document.getElementById('notif');
+  n.textContent = msg; n.style.display = 'block';
+  n.style.borderColor = color||'var(--accent)'; n.style.color = color||'var(--accent)';
+  setTimeout(function(){n.style.display='none';}, 3000);
+}
+function getCompletedWells(pid) {
+  return dailyRecords.filter(function(r){return r.projectId===pid;}).reduce(function(s,r){return s+(r.wells||0);},0);
+}
+
+// PROJECT
+function calcElapsed() {
+  var val = document.getElementById('p-date').value;
+  if(!val) return;
+  document.getElementById('p-elapsed').value = Math.floor((new Date()-new Date(val))/86400000)+' gün';
+}
+function calcProjectCement() {
+  var cpw = parseFloat(document.getElementById('p-cement-per-well').value)||0;
+  var wc = parseFloat(document.getElementById('p-well-count').value)||0;
+  var t = cpw*wc;
+  document.getElementById('p-total-cement').value = t>0 ? t.toLocaleString('tr-TR')+' kg' : '';
+}
+function clearProjectForm() {
+  ['p-company','p-date','p-elapsed','p-cement-per-well','p-well-count','p-total-cement'].forEach(function(id){document.getElementById(id).value='';});
+}
+function addProject() {
+  var company = document.getElementById('p-company').value.trim();
+  var date = document.getElementById('p-date').value;
+  var cpw = parseFloat(document.getElementById('p-cement-per-well').value);
+  var wc = parseFloat(document.getElementById('p-well-count').value);
+  if(!company||!date||!cpw||!wc){notify('Lütfen tüm alanları doldurun!','var(--red)');return;}
+  projects.push({id:Date.now(),company,date,cementPerWell:cpw,wellCount:wc,totalCement:cpw*wc,createdAt:new Date().toISOString()});
+  save(); refreshAll(); clearProjectForm();
+  notify('Proje eklendi!','var(--green)');
+}
+function deleteProject(id) {
+  var btn = document.querySelector('[data-dp="'+id+'"]');
+  if(!btn) return;
+  if(btn.dataset.confirmed==='true'){
+    projects=projects.filter(function(p){return p.id!==id;});
+    dailyRecords=dailyRecords.filter(function(r){return r.projectId!==id;});
+    save(); refreshAll(); notify('Proje silindi.','var(--red)');
+  } else {
+    btn.dataset.confirmed='true'; btn.textContent='Emin misiniz?'; btn.style.background='rgba(255,77,77,0.25)';
+    setTimeout(function(){if(btn&&btn.dataset.confirmed==='true'){btn.dataset.confirmed='false';btn.textContent='Sil';btn.style.background='';}},3000);
+  }
+}
+function renderProjectList() {
+  var el = document.getElementById('project-list-panel');
+  if(!projects.length){el.innerHTML='<div class="empty-state"><div class="ei">📁</div>Henüz proje eklenmedi.</div>';return;}
+  el.innerHTML = projects.map(function(p){
+    var comp=getCompletedWells(p.id), rem=Math.max(0,p.wellCount-comp);
+    var pct=Math.min(100,Math.round((comp/p.wellCount)*100));
+    var elapsed=Math.floor((new Date()-new Date(p.date))/86400000);
+    return '<div class="project-card">'+
+      '<div class="pc-name">'+p.company+'</div>'+
+      '<div class="meta-grid">'+
+        '<div class="meta-item"><span class="ml">Tarih</span><span class="mv">'+formatDate(p.date)+'</span></div>'+
+        '<div class="meta-item"><span class="ml">Geçen Süre</span><span class="mv o">'+elapsed+' gün</span></div>'+
+        '<div class="meta-item"><span class="ml">Toplam Kuyu</span><span class="mv">'+p.wellCount+'</span></div>'+
+        '<div class="meta-item"><span class="ml">Toplam Çimento</span><span class="mv">'+p.totalCement.toLocaleString('tr-TR')+' kg</span></div>'+
+        '<div class="meta-item"><span class="ml">Tamamlanan</span><span class="mv g">'+comp+'</span></div>'+
+        '<div class="meta-item"><span class="ml">Kalan Kuyu</span><span class="mv r">'+rem+'</span></div>'+
+      '</div>'+
+      '<div class="prog-wrap"><div class="prog-bar '+(pct===100?'g':'')+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="prog-pct">'+pct+'% tamamlandı</div>'+
+      '<div class="card-actions">'+
+        '<button class="btn btn-export" onclick="exportProjectPDF('+p.id+')">↓ PDF</button>'+
+        '<button class="btn btn-danger" data-dp="'+p.id+'" onclick="deleteProject('+p.id+')">Sil</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// DAILY
+function addDailyRecord() {
+  var pid=parseInt(document.getElementById('d-project').value);
+  var wells=parseInt(document.getElementById('d-wells').value)||0;
+  var wd=document.getElementById('d-wells-date').value;
+  var silo=parseFloat(document.getElementById('d-silo-cement').value)||0;
+  var sd=document.getElementById('d-silo-date').value;
+  if(!pid){notify('Lütfen proje seçin!','var(--red)');return;}
+  if(!wells&&!silo){notify('Kuyu veya çimento bilgisi girin!','var(--red)');return;}
+  if(wells&&!wd){notify('Kuyu için tarih girin!','var(--red)');return;}
+  if(silo&&!sd){notify('Çimento için tarih girin!','var(--red)');return;}
+  dailyRecords.push({id:Date.now(),projectId:pid,wells,wellsDate:wd||null,siloCement:silo,siloDate:sd||null,date:new Date().toISOString()});
+  save(); refreshAll(); clearDailyForm();
+  notify('Kayıt eklendi!','var(--green)');
+}
+function deleteRecord(id) {
+  var btn=document.querySelector('[data-dr="'+id+'"]');
+  if(!btn) return;
+  if(btn.dataset.confirmed==='true'){
+    dailyRecords=dailyRecords.filter(function(r){return r.id!==id;});
+    save(); refreshAll(); notify('Kayıt silindi.','var(--red)');
+  } else {
+    btn.dataset.confirmed='true'; btn.textContent='Emin misiniz?'; btn.style.background='rgba(255,77,77,0.25)';
+    setTimeout(function(){if(btn&&btn.dataset.confirmed==='true'){btn.dataset.confirmed='false';btn.textContent='Sil';btn.style.background='';}},3000);
+  }
+}
+function clearDailyForm() {
+  ['d-project','d-wells','d-wells-date','d-silo-cement','d-silo-date'].forEach(function(id){document.getElementById(id).value='';});
+}
+function renderRecords() {
+  var fval=document.getElementById('filter-project')?document.getElementById('filter-project').value:'';
+  var recs=fval?dailyRecords.filter(function(r){return r.projectId===parseInt(fval);}):dailyRecords;
+  recs=recs.slice().reverse();
+  var el=document.getElementById('records-list');
+  if(!recs.length){el.innerHTML='<div class="empty-state"><div class="ei">📊</div>Kayıt bulunmuyor.</div>';return;}
+  el.innerHTML=recs.map(function(r){
+    var p=projects.find(function(pr){return pr.id===r.projectId;});
+    return '<div class="rec-card">'+
+      '<div class="rec-header">'+
+        '<div class="rec-proj">'+(p?p.company:'<span style="color:var(--red)">Silinmiş</span>')+'</div>'+
+        '<button class="btn btn-danger" data-dr="'+r.id+'" style="width:auto;padding:6px 12px;font-size:0.6rem;" onclick="deleteRecord('+r.id+')">Sil</button>'+
+      '</div>'+
+      '<div class="rec-stats">'+
+        (r.wells?'<div class="rec-stat"><span class="rsl">Kuyu</span><span class="rsv g">'+r.wells+' adet</span></div>':'')+
+        (r.wellsDate?'<div class="rec-stat"><span class="rsl">Kuyu Tarihi</span><span class="rsv">'+formatDate(r.wellsDate)+'</span></div>':'')+
+        (r.siloCement?'<div class="rec-stat"><span class="rsl">Çimento</span><span class="rsv o">'+r.siloCement.toLocaleString('tr-TR')+' kg</span></div>':'')+
+        (r.siloDate?'<div class="rec-stat"><span class="rsl">Çimento Tarihi</span><span class="rsv">'+formatDate(r.siloDate)+'</span></div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function populateDropdowns() {
+  ['d-project','filter-project'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    var val=el.value;
+    el.innerHTML=id==='filter-project'?'<option value="">Tüm Projeler</option>':'<option value="">— Proje seçin —</option>';
+    projects.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.company+' ('+formatDate(p.date)+')';el.appendChild(o);});
+    if(val) el.value=val;
+  });
+}
+
+// DASHBOARD
+function renderDashboard() {
+  var total=projects.reduce(function(s,p){return s+p.wellCount;},0);
+  document.getElementById('dash-total-wells').textContent=total.toLocaleString('tr-TR');
+  document.getElementById('dash-project-count').textContent=projects.length;
+  var last=projects[projects.length-1];
+  if(last){
+    var comp=getCompletedWells(last.id), rem=Math.max(0,last.wellCount-comp);
+    document.getElementById('dash-completed-wells').textContent=comp.toLocaleString('tr-TR');
+    document.getElementById('dash-completed-sub').textContent=last.company;
+    document.getElementById('dash-remaining-wells').textContent=rem.toLocaleString('tr-TR');
+    document.getElementById('dash-remaining-sub').textContent=last.company;
+    var elapsed=Math.floor((new Date()-new Date(last.date))/86400000);
+    var pct=Math.min(100,Math.round((comp/last.wellCount)*100));
+    document.getElementById('last-project-summary').innerHTML=
+      '<div class="project-card">'+
+        '<div class="pc-name">'+last.company+'</div>'+
+        '<div class="meta-grid">'+
+          '<div class="meta-item"><span class="ml">Başlangıç</span><span class="mv">'+formatDateFull(last.date)+'</span></div>'+
+          '<div class="meta-item"><span class="ml">Geçen Süre</span><span class="mv o">'+elapsed+' gün</span></div>'+
+          '<div class="meta-item"><span class="ml">Toplam Kuyu</span><span class="mv">'+last.wellCount+'</span></div>'+
+          '<div class="meta-item"><span class="ml">Toplam Çimento</span><span class="mv">'+last.totalCement.toLocaleString('tr-TR')+' kg</span></div>'+
+          '<div class="meta-item"><span class="ml">Tamamlanan</span><span class="mv g">'+comp+'</span></div>'+
+          '<div class="meta-item"><span class="ml">Kalan</span><span class="mv r">'+rem+'</span></div>'+
+        '</div>'+
+        '<div class="prog-wrap"><div class="prog-bar '+(pct===100?'g':'')+'" style="width:'+pct+'%"></div></div>'+
+        '<div class="prog-pct">'+pct+'% tamamlandı</div>'+
+      '</div>';
+  } else {
+    document.getElementById('dash-completed-wells').textContent='0';
+    document.getElementById('dash-remaining-wells').textContent='0';
+    document.getElementById('last-project-summary').innerHTML='<div class="empty-state"><div class="ei">📁</div>Henüz proje eklenmedi.</div>';
+  }
+  var allEl=document.getElementById('all-projects-list');
+  if(!projects.length){allEl.innerHTML='<div class="empty-state"><div class="ei">📋</div>Proje bulunmuyor.</div>';return;}
+  allEl.innerHTML='<div class="dash-table">'+projects.map(function(p,i){
+    var comp=getCompletedWells(p.id);
+    var pct=Math.min(100,Math.round((comp/p.wellCount)*100));
+    return '<div class="dash-row"><div class="dr-num">'+(i+1)+'</div><div class="dr-name">'+p.company+'<span>'+p.wellCount+' kuyu</span></div><div class="dr-pct">'+pct+'%</div></div>';
+  }).join('')+'</div>';
+}
+
+// PDF
+function exportProjectPDF(id) {
+  var p=projects.find(function(pr){return pr.id===id;}); if(!p) return;
+  var doc=new window.jspdf.jsPDF();
+  var comp=getCompletedWells(id), rem=Math.max(0,p.wellCount-comp);
+  var elapsed=Math.floor((new Date()-new Date(p.date))/86400000);
+  doc.setFontSize(16);doc.setTextColor(245,166,35);doc.text('DSM - Proje Raporu',14,20);
+  doc.setFontSize(10);doc.setTextColor(100,100,100);doc.text(formatDate(new Date()),14,28);
+  doc.setDrawColor(200,200,200);doc.line(14,32,196,32);
+  doc.setFontSize(11);doc.setTextColor(30,30,30);
+  var rows=[['Firma',p.company],['Tarih',formatDate(p.date)],['Gecen Sure',elapsed+' gun'],['Toplam Kuyu',p.wellCount+' adet'],['Tamamlanan',comp+' adet'],['Kalan',rem+' adet'],['Kuyu Basi Cimento',p.cementPerWell.toLocaleString('tr-TR')+' kg'],['Toplam Cimento',p.totalCement.toLocaleString('tr-TR')+' kg']];
+  var y=40;
+  rows.forEach(function(r){doc.setFont(undefined,'bold');doc.text(r[0]+':',14,y);doc.setFont(undefined,'normal');doc.text(r[1],75,y);y+=8;});
+  var recs=dailyRecords.filter(function(r){return r.projectId===id;});
+  if(recs.length){
+    y+=4;doc.setFontSize(13);doc.setTextColor(245,166,35);doc.text('Gunluk Kayitlar',14,y);y+=7;
+    doc.setFontSize(9);doc.setTextColor(80,80,80);
+    doc.text('Kuyu',14,y);doc.text('Kuyu Tar.',50,y);doc.text('Cimento(kg)',100,y);doc.text('Cim.Tar.',155,y);
+    y+=4;doc.setDrawColor(220,220,220);doc.line(14,y,196,y);y+=5;doc.setTextColor(30,30,30);
+    recs.forEach(function(r){
+      doc.text(r.wells?String(r.wells):'—',14,y);
+      doc.text(r.wellsDate?formatDate(r.wellsDate):'—',50,y);
+      doc.text(r.siloCement?r.siloCement.toLocaleString('tr-TR'):'—',100,y);
+      doc.text(r.siloDate?formatDate(r.siloDate):'—',155,y);
+      y+=7;if(y>270){doc.addPage();y=20;}
+    });
+  }
+  doc.save('DSM_'+p.company.replace(/\s+/g,'_')+'.pdf');
+  notify('PDF indirildi!','var(--green)');
+}
+function exportAllPDF() {
+  var doc=new window.jspdf.jsPDF();
+  doc.setFontSize(16);doc.setTextColor(245,166,35);doc.text('DSM - Tum Projeler',14,20);
+  doc.setFontSize(10);doc.setTextColor(100,100,100);doc.text(formatDate(new Date()),14,28);
+  doc.line(14,32,196,32);var y=40;
+  projects.forEach(function(p,i){
+    if(y>240){doc.addPage();y=20;}
+    var comp=getCompletedWells(p.id),rem=Math.max(0,p.wellCount-comp);
+    doc.setFontSize(12);doc.setTextColor(245,166,35);doc.text((i+1)+'. '+p.company,14,y);y+=7;
+    doc.setFontSize(10);doc.setTextColor(50,50,50);
+    doc.text('Tarih: '+formatDate(p.date)+'  Toplam: '+p.wellCount+'  Tamamlanan: '+comp+'  Kalan: '+rem,14,y);y+=6;
+    doc.text('Toplam Cimento: '+p.totalCement.toLocaleString('tr-TR')+' kg',14,y);y+=10;
+    doc.setDrawColor(220,220,220);doc.line(14,y,196,y);y+=8;
+  });
+  doc.save('DSM_Tum_Projeler.pdf');notify('PDF indirildi!','var(--green)');
+}
+function exportRecordsPDF() {
+  var doc=new window.jspdf.jsPDF();
+  doc.setFontSize(16);doc.setTextColor(245,166,35);doc.text('DSM - Gunluk Kayitlar',14,20);
+  doc.setFontSize(10);doc.setTextColor(100,100,100);doc.text(formatDate(new Date()),14,28);
+  doc.line(14,32,196,32);var y=40;
+  doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text('Firma',14,y);doc.text('Kuyu',70,y);doc.text('Kuyu Tar.',95,y);doc.text('Cimento',140,y);doc.text('Cim.Tar.',168,y);
+  y+=4;doc.setDrawColor(200,200,200);doc.line(14,y,196,y);y+=5;doc.setTextColor(30,30,30);
+  dailyRecords.slice().reverse().forEach(function(r){
+    var p=projects.find(function(pr){return pr.id===r.projectId;});
+    doc.text(p?p.company.substring(0,18):'Silinmis',14,y);
+    doc.text(r.wells?String(r.wells):'—',70,y);
+    doc.text(r.wellsDate?formatDate(r.wellsDate):'—',95,y);
+    doc.text(r.siloCement?r.siloCement.toLocaleString('tr-TR'):'—',140,y);
+    doc.text(r.siloDate?formatDate(r.siloDate):'—',168,y);
+    y+=8;if(y>270){doc.addPage();y=20;}
+  });
+  doc.save('DSM_Kayitlar.pdf');notify('PDF indirildi!','var(--green)');
+}
+</script>
+</body>
+</html>
