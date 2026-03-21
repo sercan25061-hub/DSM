@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DSM Takip">
+<title>DSM Saha Takip</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg: #071c12;
+  --bg2: #0d2a1a;
+  --bg3: #0f3320;
+  --card: rgba(255,255,255,0.06);
+  --card2: rgba(255,255,255,0.1);
+  --border: rgba(255,255,255,0.12);
+  --green: #1ed885;
+  --green2: #0fa854;
+  --green3: rgba(30,216,133,0.15);
+  --red: #ff4f5a;
+  --red2: rgba(255,79,90,0.15);
+  --amber: #f5a623;
+  --amber2: rgba(245,166,35,0.15);
+  --blue: #4fa3ff;
+  --blue2: rgba(79,163,255,0.15);
+  --white: #ffffff;
+  --w70: rgba(255,255,255,0.7);
+  --w40: rgba(255,255,255,0.4);
+  --w20: rgba(255,255,255,0.2);
+  --w10: rgba(255,255,255,0.1);
+  --sans: 'Sora', sans-serif;
+  --r: 16px; --rs: 10px; --rm: 20px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--white);min-height:100vh;overflow-x:hidden;}
+
+/* LAYOUT */
+.app{max-width:430px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:90px;}
+.glow{position:fixed;top:-100px;left:50%;transform:translateX(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(30,216,133,0.08) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+/* HEADER */
+.topbar{padding:52px 20px 16px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+.topbar h1{font-size:1.05rem;font-weight:700;color:var(--white);}
+.topbar .sub{font-size:.72rem;color:var(--w40);margin-top:2px;}
+.topbar-right{display:flex;gap:8px;align-items:center;}
+.icon-btn{width:38px;height:38px;border-radius:12px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--white);}
+
+/* ALERT BANNER */
+.alert-banner{margin:0 20px 12px;padding:12px 16px;border-radius:var(--rs);display:flex;align-items:center;gap:10px;font-size:.78rem;font-weight:600;animation:pulse 2s infinite;}
+.alert-banner.red{background:var(--red2);border:1px solid rgba(255,79,90,0.3);color:var(--red);}
+.alert-banner.amber{background:var(--amber2);border:1px solid rgba(245,166,35,0.3);color:var(--amber);}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* SCREENS */
+.screen{display:none;padding:0 20px;position:relative;z-index:1;}
+.screen.active{display:block;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(255,255,255,0.95);padding:12px 8px 24px;display:flex;justify-content:space-around;z-index:100;border-radius:28px 28px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,0.4);}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 12px;border-radius:12px;transition:all .2s;}
+.nav-item svg{width:22px;height:22px;color:#999;}
+.nav-item span{font-size:.6rem;font-weight:600;color:#999;}
+.nav-item.active{background:#0d2a1a;}
+.nav-item.active svg,.nav-item.active span{color:var(--green);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.card+.card{margin-top:12px;}
+.card-title{font-size:.72rem;font-weight:600;color:var(--w40);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--rm);padding:14px;}
+.stat-box.full{grid-column:1/-1;}
+.stat-val{font-size:1.6rem;font-weight:700;line-height:1;color:var(--white);}
+.stat-val.green{color:var(--green);}
+.stat-val.red{color:var(--red);}
+.stat-val.amber{color:var(--amber);}
+.stat-val.blue{color:var(--blue);}
+.stat-lbl{font-size:.68rem;color:var(--w40);margin-top:5px;line-height:1.3;}
+
+/* FORM ELEMENTS */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:.72rem;font-weight:600;color:var(--w40);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:13px 16px;border-radius:var(--rs);
+  background:var(--card2);border:1px solid var(--border);
+  color:var(--white);font-family:var(--sans);font-size:.85rem;
+  outline:none;transition:border-color .2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--green);}
+.form-group select option{background:#0d2a1a;color:var(--white);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* BUTTONS */
+.btn{width:100%;padding:14px;border-radius:var(--rs);border:none;font-family:var(--sans);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-green{background:var(--green);color:#071c12;}
+.btn-green:active{transform:scale(.98);background:#17b36a;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--w70);}
+.btn-red{background:var(--red2);border:1px solid rgba(255,79,90,0.3);color:var(--red);}
+.btn+.btn{margin-top:8px;}
+.btn-sm{padding:8px 14px;font-size:.75rem;border-radius:8px;width:auto;}
+
+/* PROGRESS BAR */
+.progress-wrap{background:var(--w10);border-radius:100px;height:8px;overflow:hidden;margin-top:8px;}
+.progress-bar{height:100%;border-radius:100px;transition:width .6s ease;}
+.progress-bar.green{background:var(--green);}
+.progress-bar.amber{background:var(--amber);}
+.progress-bar.red{background:var(--red);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.76rem;}
+thead th{padding:8px 10px;text-align:left;color:var(--w40);font-weight:600;border-bottom:1px solid var(--border);}
+tbody td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--w70);}
+tbody tr:last-child td{border-bottom:none;}
+tbody td:first-child{color:var(--white);font-weight:500;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.68rem;font-weight:700;}
+.badge.green{background:var(--green3);color:var(--green);}
+.badge.amber{background:var(--amber2);color:var(--amber);}
+.badge.red{background:var(--red2);color:var(--red);}
+.badge.blue{background:var(--blue2);color:var(--blue);}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* MAINTENANCE CARD */
+.maint-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.maint-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.maint-title{font-size:.9rem;font-weight:700;}
+.maint-sub{font-size:.7rem;color:var(--w40);margin-top:3px;}
+.maint-stat{text-align:right;}
+.maint-hours{font-size:1.4rem;font-weight:700;color:var(--white);}
+.maint-next{font-size:.7rem;color:var(--w40);margin-top:2px;}
+
+/* SILO VISUAL */
+.silo-visual{display:flex;gap:16px;align-items:flex-end;margin:12px 0;}
+.silo-tank{flex:1;text-align:center;}
+.silo-body{height:80px;background:var(--w10);border-radius:8px;overflow:hidden;position:relative;border:1px solid var(--border);}
+.silo-fill{position:absolute;bottom:0;left:0;right:0;transition:height .6s ease;border-radius:0 0 6px 6px;}
+.silo-fill.green{background:linear-gradient(to top,var(--green2),var(--green3));}
+.silo-fill.amber{background:linear-gradient(to top,#c47a00,var(--amber2));}
+.silo-fill.red{background:linear-gradient(to top,#a02020,var(--red2));}
+.silo-lbl{font-size:.68rem;color:var(--w40);margin-top:6px;}
+.silo-val{font-size:.9rem;font-weight:700;}
+
+/* TOAST */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--green);color:#071c12;padding:12px 24px;border-radius:14px;font-weight:700;font-size:.82rem;z-index:999;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(30,216,133,0.4);}
+
+/* SECTION TITLE */
+.sec-title{font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--white);}
+.sec-sub{font-size:.75rem;color:var(--w40);margin-bottom:14px;margin-top:-10px;}
+
+/* HISTORY LIST */
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.hist-item:last-child{border-bottom:none;}
+.hist-date{font-size:.78rem;font-weight:600;}
+.hist-detail{font-size:.7rem;color:var(--w40);margin-top:2px;}
+.hist-val{font-size:.9rem;font-weight:700;color:var(--green);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#0d2a1a;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto;}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:16px;text-align:center;}
+
+/* SCROLL */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--w20);border-radius:2px;}
+
+/* INPUT PLACEHOLDER */
+::placeholder{color:var(--w20);}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div id="toast"></div>
+
+<div class="app">
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <div>
+    <div class="sub" id="topDate">—</div>
+    <h1 id="topProje">DSM Saha Takip</h1>
+  </div>
+  <div class="topbar-right">
+    <div class="icon-btn" onclick="exportPDF()" title="PDF İndir">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div id="alertArea"></div>
+
+<!-- ===== SCREEN: DASHBOARD ===== -->
+<div class="screen active" id="screen-dashboard">
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-val green" id="d_toplam">0</div>
+      <div class="stat-lbl">Toplam Kuyu</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val blue" id="d_son_giris">0</div>
+      <div class="stat-lbl">Son Proje Girişi</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val amber" id="d_kalan_kuyu">0</div>
+      <div class="stat-lbl">Projede Kalan Kuyu</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="d_toplam_proje">0</div>
+      <div class="stat-lbl">Tamamlanan Proje</div>
+    </div>
+    <div class="stat-box full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="card-title" style="margin-bottom:0;">Proje İlerlemesi</div>
+        <button onclick="projeDetayAc()" style="background:var(--green3);border:1px solid rgba(30,216,133,0.3);border-radius:8px;padding:5px 12px;color:var(--green);font-family:var(--sans);font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;">Detay Gör ›</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:.78rem;color:var(--w70);" id="d_ilerleme_txt">0 / 0 kuyu</span>
+        <span style="font-size:.78rem;font-weight:700;" id="d_ilerleme_pct">%0</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar green" id="d_ilerleme_bar" style="width:0%"></div></div>
+      <div id="d_proje_ozet" style="margin-top:10px;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;" id="d_proje_ozet_grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAFIKLER -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Günlük Kuyu Performansı (Son 14 Gün)</div>
+    <div style="position:relative;height:140px;"><canvas id="chart_gunluk"></canvas></div>
+  </div>
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Aylık Kuyu Performansı</div>
+    <div style="position:relative;height:140px;"><canvas id="chart_aylik"></canvas></div>
+  </div>
+
+  <!-- Çimento Özet -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Silo & Çimento</div>
+    <div class="silo-visual">
+      <div class="silo-tank">
+        <div class="silo-body">
+          <div class="silo-fill green" id="d_silo_fill" style="height:60%"></div>
+        </div>
+        <div class="silo-lbl">Siloda Kalan</div>
+        <div class="silo-val green" id="d_silo_kalan">— t</div>
+      </div>
+      <div style="flex:2;padding-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:.72rem;color:var(--w40);">Toplam Giren</span>
+          <span style="font-size:.82rem;font-weight:600;" id="d_silo_giren">— t</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:.72rem;color:var(--w40);">Harcanan</span>
+          <span style="font-size:.82rem;font-weight:600;color:var(--red);" id="d_silo_harcanan">— t</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:.72rem;color:var(--w40);">Kuyu Başı</span>
+          <span style="font-size:.82rem;font-weight:600;color:var(--amber);" id="d_kuyu_cimento">— kg</span>
+        </div>
+        <div class="progress-wrap" style="margin-top:10px;"><div class="progress-bar amber" id="d_silo_bar" style="width:50%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bakım Özet -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Bakım Durumu</div>
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;text-align:center;padding:12px;background:var(--w10);border-radius:var(--rs);" id="d_gen_card">
+        <div style="font-size:1.2rem;font-weight:700;" id="d_gen_saat">0 sa</div>
+        <div style="font-size:.65rem;color:var(--w40);margin-top:4px;">Jeneratör</div>
+        <div class="progress-wrap" style="margin-top:8px;"><div class="progress-bar green" id="d_gen_bar" style="width:0%"></div></div>
+        <div style="font-size:.65rem;color:var(--w40);margin-top:4px;" id="d_gen_kalan">200 sa bakım</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:12px;background:var(--w10);border-radius:var(--rs);" id="d_san_card">
+        <div style="font-size:1.2rem;font-weight:700;" id="d_san_saat">0 sa</div>
+        <div style="font-size:.65rem;color:var(--w40);margin-top:4px;">Santral</div>
+        <div class="progress-wrap" style="margin-top:8px;"><div class="progress-bar green" id="d_san_bar" style="width:0%"></div></div>
+        <div style="font-size:.65rem;color:var(--w40);margin-top:4px;" id="d_san_kalan">50 sa bakım</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Son Girişler -->
+  <div class="card">
+    <div class="card-title">Son Günlük Girişler</div>
+    <div id="d_son_girisler"><div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz giriş yok</div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: KUYU GİRİŞİ ===== -->
+<div class="screen" id="screen-kuyu">
+  <div class="sec-title">Günlük Kuyu Girişi</div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tarih</label>
+        <input type="date" id="k_tarih">
+      </div>
+      <div class="form-group">
+        <label>Kuyu Adedi</label>
+        <input type="number" id="k_adet" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Vardiya / Not</label>
+      <input type="text" id="k_not" placeholder="İsteğe bağlı...">
+    </div>
+    <button class="btn btn-green" onclick="kuyuEkle()">✓ Giriş Kaydet</button>
+  </div>
+
+  <!-- Günlük toplam -->
+  <div class="stats-grid" style="margin-bottom:12px;">
+    <div class="stat-box">
+      <div class="stat-val green" id="k_bugun_top">0</div>
+      <div class="stat-lbl">Bugün Toplam</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val blue" id="k_bu_ay">0</div>
+      <div class="stat-lbl">Bu Ay</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="k_gun_ort">0</div>
+      <div class="stat-lbl">Günlük Ort.</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val amber" id="k_ay_ort">0</div>
+      <div class="stat-lbl">Aylık Ort.</div>
+    </div>
+  </div>
+
+  <!-- Geçmiş -->
+  <div class="card">
+    <div class="card-title">Giriş Geçmişi <span id="k_gecmis_count" style="color:var(--w40)"></span></div>
+    <div id="k_gecmis_list"><div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz kayıt yok</div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: SİLO ===== -->
+<div class="screen" id="screen-silo">
+  <div class="sec-title">Silo & Çimento Takibi</div>
+
+  <!-- Proje tamamlandı banner -->
+  <div id="silo_tamamlandi_banner" style="display:none;align-items:center;gap:10px;background:var(--green3);border:1px solid rgba(30,216,133,0.3);border-radius:var(--rs);padding:12px 16px;margin-bottom:12px;">
+    <span style="font-size:1.1rem;">✅</span>
+    <span style="font-size:.78rem;font-weight:600;color:var(--green);">Proje tamamlandı — Silo yeni proje için sıfırlandı.</span>
+  </div>
+
+  <!-- Silo Görsel -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="silo-visual" style="justify-content:center;">
+      <div class="silo-tank" style="max-width:100px;">
+        <div class="silo-body" style="height:120px;">
+          <div class="silo-fill green" id="s_silo_fill" style="height:60%"></div>
+        </div>
+        <div class="silo-lbl">Doluluk Oranı</div>
+        <div class="silo-val green" id="s_silo_pct">—%</div>
+      </div>
+      <div style="flex:2;padding:8px 0 8px 16px;">
+        <div style="margin-bottom:10px;">
+          <div style="font-size:.7rem;color:var(--w40);">Toplam Proje Çimento</div>
+          <div style="font-size:1.1rem;font-weight:700;" id="s_kapasite">— t</div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:.7rem;color:var(--w40);">Toplam Silobas</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--blue);" id="s_toplam_giren">0 t</div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:.7rem;color:var(--w40);">Harcanan</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--red);" id="s_harcanan">0 t</div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--w40);">Siloda Kalan</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--green);" id="s_kalan">0 t</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Silo Yükleme -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Silo Yüklemesi Ekle</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tarih</label>
+        <input type="date" id="s_tarih">
+      </div>
+      <div class="form-group">
+        <label>Miktar (Ton)</label>
+        <input type="number" id="s_miktar" placeholder="0.0" step="0.1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>İrsaliye / Not</label>
+      <input type="text" id="s_not" placeholder="Tedarikçi, plaka...">
+    </div>
+    <button class="btn btn-green" onclick="siloEkle()">+ Yükleme Kaydet</button>
+  </div>
+
+  <!-- Proje Çimento Özeti -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Proje Çimento Bütçesi</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val blue" id="s_proje_hedef">— t</div>
+        <div class="stat-lbl">Proje Hedefi</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val amber" id="s_kuyu_basi">— kg</div>
+        <div class="stat-lbl">Kuyu Başı</div>
+      </div>
+      <div class="stat-box full">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:.78rem;color:var(--w70);">Bütçe Kullanımı</span>
+          <span style="font-size:.78rem;font-weight:700;" id="s_butce_pct">%0</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar amber" id="s_butce_bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Silo Geçmişi -->
+  <div class="card">
+    <div class="card-title">Yükleme Geçmişi</div>
+    <div id="s_gecmis_list"><div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz yükleme yok</div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: BAKIM ===== -->
+<div class="screen" id="screen-bakim">
+  <div class="sec-title">Ekipman Bakım Takibi</div>
+
+  <!-- Jeneratör -->
+  <div class="maint-card" id="gen_card">
+    <div class="maint-header">
+      <div>
+        <div class="maint-title">⚡ Jeneratör</div>
+        <div class="maint-sub" id="b_gen_sub">Her 200 saatte bir bakım</div>
+      </div>
+      <div class="maint-stat">
+        <div class="maint-hours" id="b_gen_saat">0 sa</div>
+        <div class="maint-next" id="b_gen_next">Sonraki: 200 sa</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--w10);border-radius:var(--rs);padding:10px 12px;">
+      <span style="font-size:.72rem;color:var(--w40);white-space:nowrap;">Bakım Aralığı (saat):</span>
+      <input type="number" id="gen_aralik_input" min="1" style="width:80px;padding:6px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--white);font-family:var(--sans);font-size:.85rem;font-weight:700;outline:none;" oninput="bakimAraligGuncelle()">
+      <span style="font-size:.7rem;color:var(--w40);" id="b_gen_kuyu_eq"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:.72rem;color:var(--w40);">Döngü İlerlemesi</span>
+      <span style="font-size:.72rem;font-weight:600;" id="b_gen_pct">0%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar green" id="b_gen_bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:.72rem;color:var(--w40);">
+      <span>Son Bakım: <b id="b_gen_son_tarih" style="color:var(--w70);">—</b></span>
+      <span>Toplam: <b id="b_gen_toplam" style="color:var(--w70);">0 bakım</b></span>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-green" onclick="bakimYap('gen')">✓ Jeneratör Bakımı Yapıldı</button>
+  </div>
+
+  <!-- Santral -->
+  <div class="maint-card" id="san_card">
+    <div class="maint-header">
+      <div>
+        <div class="maint-title">🏭 Santral</div>
+        <div class="maint-sub" id="b_san_sub">Her 50 saatte bir bakım</div>
+      </div>
+      <div class="maint-stat">
+        <div class="maint-hours" id="b_san_saat">0 sa</div>
+        <div class="maint-next" id="b_san_next">Sonraki: 50 sa</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--w10);border-radius:var(--rs);padding:10px 12px;">
+      <span style="font-size:.72rem;color:var(--w40);white-space:nowrap;">Bakım Aralığı (saat):</span>
+      <input type="number" id="san_aralik_input" min="1" style="width:80px;padding:6px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);color:var(--white);font-family:var(--sans);font-size:.85rem;font-weight:700;outline:none;" oninput="bakimAraligGuncelle()">
+      <span style="font-size:.7rem;color:var(--w40);" id="b_san_kuyu_eq"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:.72rem;color:var(--w40);">Döngü İlerlemesi</span>
+      <span style="font-size:.72rem;font-weight:600;" id="b_san_pct">0%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar green" id="b_san_bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:.72rem;color:var(--w40);">
+      <span>Son Bakım: <b id="b_san_son_tarih" style="color:var(--w70);">—</b></span>
+      <span>Toplam: <b id="b_san_toplam" style="color:var(--w70);">0 bakım</b></span>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-green" onclick="bakimYap('san')">✓ Santral Bakımı Yapıldı</button>
+  </div>
+
+  <!-- Bakım Geçmişi -->
+  <div class="card">
+    <div class="card-title">Bakım Geçmişi</div>
+    <div id="b_gecmis"><div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz bakım yapılmadı</div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: PROJE ===== -->
+<div class="screen" id="screen-proje">
+  <div class="sec-title">Proje Bilgileri</div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Genel Bilgiler</div>
+    <div class="form-group">
+      <label>Proje Adı</label>
+      <input type="text" id="p_ad" placeholder="Proje adını girin...">
+    </div>
+    <div class="form-group">
+      <label>Ada / Parsel</label>
+      <input type="text" id="p_lokasyon" placeholder="Ada No / Parsel No...">
+    </div>
+    <div class="form-group">
+      <label>Başlangıç Tarihi</label>
+      <input type="date" id="p_baslangic">
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--w10);border-radius:var(--rs);padding:10px 14px;font-size:.75rem;color:var(--w40);">
+      <span>🏁</span>
+      <span>Bitiş tarihi hedef kuyu sayısına ulaşıldığında <b style="color:var(--w70);">otomatik</b> kaydedilir.</span>
+      <span id="p_bitis_goster" style="margin-left:auto;font-weight:700;color:var(--green);white-space:nowrap;"></span>
+    </div>
+    <input type="hidden" id="p_bitis">
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Kuyu Planı</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Toplam Kuyu Sayısı</label>
+        <input type="number" id="p_toplam_kuyu" placeholder="0" min="0" oninput="projeHesapla()">
+      </div>
+      <div class="form-group">
+        <label>Kuyu Başı Çimento (kg)</label>
+        <input type="number" id="p_kuyu_cimento" placeholder="0" min="0" oninput="projeHesapla()">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Kuyu Derinliği (m)</label>
+        <input type="number" id="p_derinlik" placeholder="0" step="0.1" oninput="projeHesapla()">
+      </div>
+      <div class="form-group">
+        <label>Çap (m)</label>
+        <input type="number" id="p_cap" placeholder="0.5" step="0.01" oninput="projeHesapla()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Su / Çimento Oranı (w/c)</label>
+      <input type="number" id="p_wc" placeholder="0.6" step="0.01">
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Silo Kapasitesi</div>
+    <!-- Otomatik hesaplanan değer -->
+    <div style="background:var(--green3);border:1px solid rgba(30,216,133,0.25);border-radius:var(--rs);padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:.68rem;color:var(--w40);margin-bottom:4px;">Bu Proje İçin Gereken Silo</div>
+        <div style="font-size:1.4rem;font-weight:700;color:var(--green);" id="p_silo_hesap">— kg</div>
+        <div style="font-size:.68rem;color:var(--w40);margin-top:2px;" id="p_silo_hesap_ton">— ton</div>
+      </div>
+      <div style="font-size:.7rem;color:var(--w40);text-align:right;line-height:1.7;" id="p_silo_formul">— kuyu<br>× — kg<br>= —</div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>Fiziksel Silo Kapasitesi (ton)</label>
+      <input type="number" id="p_silo_kapasite" placeholder="Gerçek silo kapasitesi..." step="0.1">
+    </div>
+  </div>
+
+  <!-- Hesaplama Özeti -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Hesaplanan Değerler</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val blue" id="p_toplam_cimento">— t</div>
+        <div class="stat-lbl">Proje Toplam Çimento</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val green" id="p_hacim">— m³</div>
+        <div class="stat-lbl">Tahmini Hacim</div>
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="projeHesapla()" style="margin-top:8px;">🔄 Hesapla</button>
+  </div>
+
+  <button class="btn btn-green" onclick="projeKaydet()" style="margin-bottom:8px;">💾 Proje Kaydet</button>
+  <button class="btn btn-outline" onclick="projeTamamla()" style="margin-bottom:8px;">✅ Projeyi Tamamlandı Olarak İşaretle</button>
+
+  <div class="card" style="margin-bottom:8px;">
+    <div class="card-title">Veri Yedekleme</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-outline" onclick="yedekAl()" style="flex:1;padding:12px;">⬇ Yedek Al</button>
+      <label style="flex:1;" id="yukle_label">
+        <div class="btn btn-outline" style="padding:12px;text-align:center;cursor:pointer;border-radius:var(--rs);border:1.5px solid var(--border);font-size:.85rem;font-weight:700;color:var(--w70);">⬆ Yedek Yükle</div>
+        <input type="file" id="yedek_dosya" accept=".json" style="display:none;" onchange="yedekYukle(event)">
+      </label>
+    </div>
+  </div>
+
+  <button class="btn btn-red" onclick="verileriSifirla()">⚠ Tüm Verileri Sıfırla</button>
+</div>
+
+<!-- ===== PROJE DETAY MODAL ===== -->
+<div class="modal-bg" id="projeModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="modal-title" style="margin-bottom:0;">Proje Detayı</div>
+      <button onclick="projeModalKapat()" style="background:var(--w10);border:none;border-radius:10px;width:32px;height:32px;color:var(--w70);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <!-- Salt okunur özet -->
+    <div id="modal_ozet_area">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="modal_ozet_grid"></div>
+      <button onclick="modalDuzenleAc()" class="btn btn-outline" style="margin-bottom:0;">✏ Proje Bilgilerini Düzenle</button>
+    </div>
+
+    <!-- Düzenleme formu (başta gizli) -->
+    <div id="modal_duzenle_area" style="display:none;">
+      <div style="font-size:.72rem;color:var(--amber);background:var(--amber2);border-radius:var(--rs);padding:8px 12px;margin-bottom:14px;">⚠ Değişiklikler kaydedilince aktif projeye uygulanır.</div>
+
+      <div class="form-group">
+        <label>Proje Adı</label>
+        <input type="text" id="m_ad" placeholder="Proje adı...">
+      </div>
+      <div class="form-group">
+        <label>Ada / Parsel</label>
+        <input type="text" id="m_lokasyon" placeholder="Ada No / Parsel No...">
+      </div>
+      <div class="form-group">
+        <label>Başlangıç Tarihi</label>
+        <input type="date" id="m_baslangic">
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Toplam Kuyu Sayısı</label>
+          <input type="number" id="m_toplam_kuyu" placeholder="0" min="0" oninput="modalHesapla()">
+        </div>
+        <div class="form-group">
+          <label>Kuyu Başı Çimento (kg)</label>
+          <input type="number" id="m_kuyu_cimento" placeholder="0" min="0" oninput="modalHesapla()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kuyu Derinliği (m)</label>
+          <input type="number" id="m_derinlik" placeholder="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Çap (m)</label>
+          <input type="number" id="m_cap" placeholder="0.5" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Su / Çimento Oranı (w/c)</label>
+        <input type="number" id="m_wc" placeholder="0.6" step="0.01">
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+
+      <div class="form-group">
+        <label>Fiziksel Silo Kapasitesi (ton)</label>
+        <input type="number" id="m_silo_kapasite" placeholder="0" step="0.1">
+      </div>
+
+      <!-- Otomatik hesap önizleme -->
+      <div id="modal_hesap_onizleme" style="background:var(--green3);border:1px solid rgba(30,216,133,0.2);border-radius:var(--rs);padding:12px;margin-bottom:14px;display:none;">
+        <div style="font-size:.68rem;color:var(--w40);margin-bottom:4px;">Proje Çimento İhtiyacı</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--green);" id="modal_silo_hesap">—</div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="modalDuzenleKapat()" class="btn btn-outline" style="flex:1;">İptal</button>
+        <button onclick="modalKaydet()" class="btn btn-green" style="flex:2;">💾 Güncelle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="showScreen('dashboard')" id="nav-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span>Panel</span>
+  </div>
+  <div class="nav-item" onclick="showScreen('kuyu')" id="nav-kuyu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    <span>Kuyu</span>
+  </div>
+  <div class="nav-item" onclick="showScreen('silo')" id="nav-silo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Silo</span>
+  </div>
+  <div class="nav-item" onclick="showScreen('bakim')" id="nav-bakim">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    <span>Bakım</span>
+  </div>
+  <div class="nav-item" onclick="showScreen('proje')" id="nav-proje">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span>Proje</span>
+  </div>
+</div>
+</div>
+
+<script>
+// ===================== VERİ MODELI =====================
+const DB = {
+  get(k,d){try{return JSON.parse(localStorage.getItem('dsm_'+k))||d;}catch{return d;}},
+  set(k,v){localStorage.setItem('dsm_'+k,JSON.stringify(v));}
+};
+
+// ===================== YARDIMCI =====================
+function fmtDate(d){if(!d)return '—';const dt=new Date(d);return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function today(){return new Date().toISOString().split('T')[0];}
+function showToast(msg,type='green'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='red'?'var(--red)':type==='amber'?'var(--amber)':'var(--green)';
+  t.style.color=type==='green'?'#071c12':'white';
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',2400);
+}
+
+// ===================== NAVIGATION =====================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  refreshAll();
+}
+
+// ===================== FORMÜLLER =====================
+// Jeneratör: 10 dk/kuyu = 1 saat/6 kuyu
+function genSaat(kuyuSayisi){return +(kuyuSayisi*10/60).toFixed(2);}
+// Santral: aynı şekilde
+function sanSaat(kuyuSayisi){return +(kuyuSayisi*10/60).toFixed(2);}
+// Bakım aralıkları — DB'den okunur, varsayılan 200 / 50
+function getGenSa(){return DB.get('gen_bakim_sa',200);}
+function getSanSa(){return DB.get('san_bakim_sa',50);}
+
+function bakimAraligGuncelle(){
+  const gv=parseInt(document.getElementById('gen_aralik_input').value)||200;
+  const sv=parseInt(document.getElementById('san_aralik_input').value)||50;
+  DB.set('gen_bakim_sa',gv);
+  DB.set('san_bakim_sa',sv);
+  refreshAll();
+}
+
+// ===================== KUYU GİRİŞİ =====================
+function kuyuEkle(){
+  const tarih=document.getElementById('k_tarih').value||today();
+  const adet=parseInt(document.getElementById('k_adet').value)||0;
+  const not=document.getElementById('k_not').value.trim();
+  if(adet<=0){showToast('Kuyu adedi giriniz!','amber');return;}
+  const list=DB.get('kuyular',[]);
+  const idx=list.findIndex(x=>x.tarih===tarih);
+  if(idx>=0){list[idx].adet+=adet;if(not)list[idx].not=not;}
+  else{list.push({tarih,adet,not});}
+  list.sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  DB.set('kuyular',list);
+  // Hedef kuyu sayısına ulaşıldıysa bitiş tarihini otomatik kaydet
+  const toplam=list.reduce((s,x)=>s+x.adet,0);
+  const proje=DB.get('proje',{});
+  const hedef=proje.toplam_kuyu||0;
+  if(hedef>0 && toplam>=hedef && !proje.bitis){
+    proje.bitis=tarih;
+    DB.set('proje',proje);
+    showToast('🎉 Hedef tamamlandı! Bitiş tarihi kaydedildi: '+fmtDate(tarih),'amber');
+  } else {
+    showToast(`${adet} kuyu eklendi ✓`);
+  }
+  document.getElementById('k_adet').value='';
+  document.getElementById('k_not').value='';
+  refreshAll();
+  checkAlerts();
+}
+
+function kuyuSil(tarih){
+  if(!confirm('Bu kaydı silmek istiyor musunuz?'))return;
+  const list=DB.get('kuyular',[]).filter(x=>x.tarih!==tarih);
+  DB.set('kuyular',list);
+  refreshAll();
+  checkAlerts();
+}
+
+// ===================== SİLO =====================
+function siloEkle(){
+  const tarih=document.getElementById('s_tarih').value||today();
+  const miktar=parseFloat(document.getElementById('s_miktar').value)||0;
+  const not=document.getElementById('s_not').value.trim();
+  if(miktar<=0){showToast('Miktar giriniz!','amber');return;}
+  const list=DB.get('silo_yuklemeler',[]);
+  list.push({tarih,miktar,not});
+  list.sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  DB.set('silo_yuklemeler',list);
+  DB.set('silo_sifirli',false); // Yeni yükleme = yeni proje başladı
+  document.getElementById('s_miktar').value='';
+  document.getElementById('s_not').value='';
+  showToast(`${miktar}t silo yüklemesi kaydedildi ✓`);
+  refreshAll();
+}
+
+// ===================== BAKIM =====================
+function bakimYap(tip){
+  const tarih=today();
+  const list=DB.get('bakimlar',[]);
+  const toplam=DB.get('kuyular',[]).reduce((s,x)=>s+x.adet,0);
+  list.push({tip,tarih,saat_basi:tip==='gen'?genSaat(toplam):sanSaat(toplam)});
+  DB.set('bakimlar',list);
+  // Reset sayacı: son bakımdan sonraki kuyuları 0'a çek
+  DB.set('son_gen_bakim_kuyu', tip==='gen'?toplam:DB.get('son_gen_bakim_kuyu',0));
+  DB.set('son_san_bakim_kuyu', tip==='san'?toplam:DB.get('son_san_bakim_kuyu',0));
+  showToast(`${tip==='gen'?'Jeneratör':'Santral'} bakımı kaydedildi ✓`);
+  refreshAll();
+  checkAlerts();
+}
+
+// ===================== PROJE =====================
+function projeHesapla(){
+  const kuyu=parseInt(document.getElementById('p_toplam_kuyu').value)||0;
+  const kuyuCimento=parseInt(document.getElementById('p_kuyu_cimento').value)||0;
+  const derinlik=parseFloat(document.getElementById('p_derinlik').value)||0;
+  const cap=parseFloat(document.getElementById('p_cap').value)||0;
+  const toplamCimento=kuyu*kuyuCimento/1000;
+  const hacim=kuyu*(Math.PI*(cap/2)*(cap/2)*derinlik);
+  document.getElementById('p_toplam_cimento').textContent=toplamCimento.toFixed(1)+' t';
+  document.getElementById('p_hacim').textContent=hacim.toFixed(1)+' m³';
+  // Silo ihtiyacı otomatik hesap
+  const siloKg=kuyu*kuyuCimento;
+  const siloTon=(siloKg/1000).toFixed(3);
+  document.getElementById('p_silo_hesap').textContent=siloKg.toLocaleString('tr-TR')+' kg';
+  document.getElementById('p_silo_hesap_ton').textContent='= '+siloTon+' ton';
+  document.getElementById('p_silo_formul').innerHTML=kuyu+' kuyu<br>× '+kuyuCimento+' kg<br>= '+(siloKg?siloKg.toLocaleString('tr-TR')+' kg':'—');
+  // Fiziksel silo alanına otomatik yaz (eğer boşsa)
+  const siloInput=document.getElementById('p_silo_kapasite');
+  if(!siloInput.value && siloTon>0) siloInput.value=siloTon;
+}
+
+function projeKaydet(){
+  const mevcutProje=DB.get('proje',{});
+  const p={
+    ad:document.getElementById('p_ad').value,
+    lokasyon:document.getElementById('p_lokasyon').value,
+    baslangic:document.getElementById('p_baslangic').value,
+    bitis:mevcutProje.bitis||'',  // bitiş tarihi sadece otomatik atanır, elle değiştirilemez
+    toplam_kuyu:parseInt(document.getElementById('p_toplam_kuyu').value)||0,
+    derinlik:parseFloat(document.getElementById('p_derinlik').value)||0,
+    cap:parseFloat(document.getElementById('p_cap').value)||0,
+    kuyu_cimento:parseInt(document.getElementById('p_kuyu_cimento').value)||0,
+    silo_kapasite:parseFloat(document.getElementById('p_silo_kapasite').value)||0,
+    wc:parseFloat(document.getElementById('p_wc').value)||0.6
+  };
+  DB.set('proje',p);
+  // Tamamlanan proje sayacını artır (her yeni proje kaydedildiğinde)
+  const eskiProje=DB.get('proje',{});
+  if(eskiProje.ad && eskiProje.ad !== p.ad){
+    DB.set('tamamlanan_projeler', (DB.get('tamamlanan_projeler',0)+1));
+  } else if(!DB.get('tamamlanan_projeler',null) && p.ad){
+    DB.set('tamamlanan_projeler', DB.get('tamamlanan_projeler',0)||1);
+  }
+  document.getElementById('topProje').textContent=p.ad||'DSM Saha Takip';
+  showToast('Proje bilgileri kaydedildi ✓');
+  // Formu temizle
+  ['p_ad','p_lokasyon','p_baslangic','p_toplam_kuyu','p_derinlik','p_cap','p_kuyu_cimento','p_silo_kapasite','p_wc'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('p_silo_hesap').textContent='— kg';
+  document.getElementById('p_silo_hesap_ton').textContent='— ton';
+  document.getElementById('p_silo_formul').innerHTML='— kuyu<br>× — kg<br>= —';
+  document.getElementById('p_toplam_cimento').textContent='— t';
+  document.getElementById('p_hacim').textContent='— m³';
+  refreshAll();
+}
+
+function projeTamamla(){
+  if(!confirm('Bu projeyi tamamlandı olarak işaretlemek istiyor musunuz?'))return;
+  const sayi=DB.get('tamamlanan_projeler',0)+1;
+  DB.set('tamamlanan_projeler',sayi);
+  // Silo verisini sıfırla
+  DB.set('silo_yuklemeler',[]);
+  DB.set('silo_sifirli',true);
+  showToast('Proje tamamlandı! Silo sıfırlandı. Toplam: '+sayi+' proje ✓');
+  refreshAll();
+}
+
+function verileriSifirla(){
+  if(!confirm('TÜM veriler silinecek! Emin misiniz?'))return;
+  if(!confirm('Son kez: Bu işlem geri alınamaz!'))return;
+  ['kuyular','silo_yuklemeler','bakimlar','proje','son_gen_bakim_kuyu','son_san_bakim_kuyu','tamamlanan_projeler','gen_bakim_sa','san_bakim_sa','silo_sifirli'].forEach(k=>localStorage.removeItem('dsm_'+k));
+  showToast('Veriler sıfırlandı','amber');
+  location.reload();
+}
+
+// ===================== ALERT SİSTEMİ =====================
+function checkAlerts(){
+  const kuyular=DB.get('kuyular',[]);
+  const toplam=kuyular.reduce((s,x)=>s+x.adet,0);
+  const sonGenKuyu=DB.get('son_gen_bakim_kuyu',0);
+  const sonSanKuyu=DB.get('son_san_bakim_kuyu',0);
+  const genFark=toplam-sonGenKuyu;
+  const sanFark=toplam-sonSanKuyu;
+  const genSaatBirikik=genSaat(genFark);
+  const sanSaatBirikik=sanSaat(sanFark);
+  const alerts=[];
+  if(genSaatBirikik>=getGenSa()){
+    alerts.push({type:'red',msg:`⚡ Jeneratör BAKIMI GEREKİYOR! ${genSaatBirikik.toFixed(0)} saat çalıştı (${getGenSa()} saat limiti)`});
+  } else if(genSaatBirikik>=getGenSa()*0.85){
+    alerts.push({type:'amber',msg:`⚡ Jeneratör bakıma yaklaşıyor: ${genSaatBirikik.toFixed(0)}/${getGenSa()} saat`});
+  }
+  if(sanSaatBirikik>=getSanSa()){
+    alerts.push({type:'red',msg:`🏭 Santral BAKIMI GEREKİYOR! ${sanSaatBirikik.toFixed(0)} saat çalıştı (${getSanSa()} saat limiti)`});
+  } else if(sanSaatBirikik>=getSanSa()*0.85){
+    alerts.push({type:'amber',msg:`🏭 Santral bakıma yaklaşıyor: ${sanSaatBirikik.toFixed(0)}/${getSanSa()} saat`});
+  }
+  const area=document.getElementById('alertArea');
+  area.innerHTML=alerts.map(a=>`<div class="alert-banner ${a.type}"><div class="alert-dot"></div><span>${a.msg}</span></div>`).join('');
+}
+
+// ===================== CHARTS =====================
+const chartInstances={};
+function drawBarChart(canvasId, labels, data, color, bgColor){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  if(chartInstances[canvasId]) chartInstances[canvasId].destroy();
+  const maxVal=Math.max(...data,1);
+  chartInstances[canvasId]=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        data,
+        backgroundColor:data.map(v=>v===maxVal?color:bgColor),
+        borderColor:data.map(v=>v===maxVal?color:color+'66'),
+        borderWidth:1,
+        borderRadius:5,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(13,42,26,0.95)',
+          titleColor:'rgba(255,255,255,0.5)',
+          bodyColor:'#fff',
+          bodyFont:{family:'Sora',size:13,weight:'700'},
+          titleFont:{family:'Sora',size:10},
+          padding:10,
+          cornerRadius:10,
+          displayColors:false,
+          callbacks:{label:(i)=>i.raw+' kuyu'}
+        }
+      },
+      scales:{
+        x:{
+          ticks:{color:'rgba(255,255,255,0.35)',font:{family:'Sora',size:9},maxRotation:0},
+          grid:{display:false},
+          border:{display:false}
+        },
+        y:{
+          ticks:{color:'rgba(255,255,255,0.35)',font:{family:'Sora',size:9},maxTicksLimit:4,stepSize:1},
+          grid:{color:'rgba(255,255,255,0.06)'},
+          border:{display:false},
+          beginAtZero:true
+        }
+      },
+      animation:{duration:500}
+    }
+  });
+}
+
+// ===================== REFRESH ALL =====================
+function refreshAll(){
+  const kuyular=DB.get('kuyular',[]);
+  const proje=DB.get('proje',{});
+  const silo=DB.get('silo_yuklemeler',[]);
+  const bakimlar=DB.get('bakimlar',[]);
+
+  const toplam=kuyular.reduce((s,x)=>s+x.adet,0);
+  const todayStr=today();
+  const bugun=kuyular.filter(x=>x.tarih===todayStr).reduce((s,x)=>s+x.adet,0);
+  const thisMonth=todayStr.substring(0,7);
+  const buAy=kuyular.filter(x=>x.tarih.startsWith(thisMonth)).reduce((s,x)=>s+x.adet,0);
+
+  // Günlük ortalama
+  const gunler=[...new Set(kuyular.map(x=>x.tarih))].length||1;
+  const gunOrt=Math.round(toplam/gunler);
+
+  // Aylık ortalama
+  const aylar=[...new Set(kuyular.map(x=>x.tarih.substring(0,7)))].length||1;
+  const ayOrt=Math.round(toplam/aylar);
+
+  // Çimento hesabı
+  const kuyuCimento=proje.kuyu_cimento||0;
+  const harcanan=+(toplam*kuyuCimento/1000).toFixed(3);
+  const toplamGiren=+silo.reduce((s,x)=>s+x.miktar,0).toFixed(3);
+  const kalan=+(toplamGiren-harcanan).toFixed(3);
+  const siloKapasite=proje.silo_kapasite||100;
+  const siloPct=Math.min(100,Math.round((kalan/siloKapasite)*100));
+
+  // Bakım hesabı
+  const sonGenKuyu=DB.get('son_gen_bakim_kuyu',0);
+  const sonSanKuyu=DB.get('son_san_bakim_kuyu',0);
+  const genFark=toplam-sonGenKuyu;
+  const sanFark=toplam-sonSanKuyu;
+  const genSaatBirikik=genSaat(genFark);
+  const sanSaatBirikik=sanSaat(sanFark);
+  const genPct=Math.min(100,Math.round((genSaatBirikik/getGenSa())*100));
+  const sanPct=Math.min(100,Math.round((sanSaatBirikik/getSanSa())*100));
+
+  // ---- DASHBOARD ----
+  document.getElementById('topDate').textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('topProje').textContent=proje.ad||'DSM Saha Takip';
+  v('d_toplam',toplam);
+
+  // Son proje girişi (en son tarihteki kuyu adedi) — proje tamam ise gösterme
+  const projeTamam = hedefKuyu > 0 && toplam >= hedefKuyu;
+  const sonGiris = kuyular.length > 0 ? kuyular[0].adet : 0;
+  const sonGirisEl = document.getElementById('d_son_giris');
+  const sonGirisLblEl = sonGirisEl ? sonGirisEl.closest('.stat-box')?.querySelector('.stat-lbl') : null;
+  if(projeTamam){
+    if(sonGirisEl) sonGirisEl.textContent = '—';
+    if(sonGirisLblEl) sonGirisLblEl.textContent = 'Proje Tamamlandı';
+  } else {
+    if(sonGirisEl) sonGirisEl.textContent = sonGiris;
+    if(sonGirisLblEl) sonGirisLblEl.textContent = 'Son Proje Girişi';
+  }
+
+  // Projede kalan kuyu
+  const hedefKuyu=proje.toplam_kuyu||0;
+  const kalanKuyu = Math.max(0, hedefKuyu - toplam);
+  v('d_kalan_kuyu', kalanKuyu);
+
+  // Tamamlanan proje sayısı
+  const tamamlananProjeler = DB.get('tamamlanan_projeler', 0);
+  v('d_toplam_proje', tamamlananProjeler);
+
+  const ilerlPct=hedefKuyu>0?Math.min(100,Math.round((toplam/hedefKuyu)*100)):0;
+  document.getElementById('d_ilerleme_txt').textContent=toplam+' / '+(hedefKuyu||'?')+' kuyu';
+  document.getElementById('d_ilerleme_pct').textContent='%'+ilerlPct;
+  document.getElementById('d_ilerleme_bar').style.width=ilerlPct+'%';
+
+  // ---- CHARTS ----
+  // Günlük: son 14 günün verileri
+  const bugunDate = new Date();
+  const gunlukLabels=[], gunlukData=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(bugunDate); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const lbl=d.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});
+    const val=kuyular.filter(x=>x.tarih===ds).reduce((s,x)=>s+x.adet,0);
+    gunlukLabels.push(lbl); gunlukData.push(val);
+  }
+  // Aylık: her ay toplam
+  const ayMap={};
+  kuyular.forEach(k=>{const ay=k.tarih.substring(0,7);ayMap[ay]=(ayMap[ay]||0)+k.adet;});
+  const ayKeys=Object.keys(ayMap).sort();
+  const aylikLabels=ayKeys.map(k=>{const[y,m]=k.split('-');return m+'/'+y.substring(2);});
+  const aylikData=ayKeys.map(k=>ayMap[k]);
+
+  drawBarChart('chart_gunluk', gunlukLabels, gunlukData, '#1ed885', 'rgba(30,216,133,0.25)');
+  drawBarChart('chart_aylik', aylikLabels, aylikData, '#4fa3ff', 'rgba(79,163,255,0.25)');
+
+  document.getElementById('d_silo_kalan').textContent=kalan+'t';
+  document.getElementById('d_silo_giren').textContent=toplamGiren+'t';
+  document.getElementById('d_silo_harcanan').textContent=harcanan+'t';
+  document.getElementById('d_kuyu_cimento').textContent=kuyuCimento+'kg';
+  const siloFillEl=document.getElementById('d_silo_fill');
+  siloFillEl.style.height=Math.max(0,siloPct)+'%';
+  siloFillEl.className='silo-fill '+(siloPct>30?'green':siloPct>10?'amber':'red');
+  document.getElementById('d_silo_bar').style.width=siloPct+'%';
+  document.getElementById('d_silo_bar').className='progress-bar '+(siloPct>30?'amber':siloPct>10?'amber':'red');
+
+  document.getElementById('d_gen_saat').textContent=genSaatBirikik.toFixed(1)+' sa';
+  document.getElementById('d_san_saat').textContent=sanSaatBirikik.toFixed(1)+' sa';
+  const gBar=document.getElementById('d_gen_bar');
+  gBar.style.width=genPct+'%';
+  gBar.className='progress-bar '+(genPct<70?'green':genPct<90?'amber':'red');
+  const sBar=document.getElementById('d_san_bar');
+  sBar.style.width=sanPct+'%';
+  sBar.className='progress-bar '+(sanPct<70?'green':sanPct<90?'amber':'red');
+  document.getElementById('d_gen_kalan').textContent='Bakıma: '+(getGenSa()-genSaatBirikik).toFixed(0)+' sa';
+  document.getElementById('d_san_kalan').textContent='Bakıma: '+(getSanSa()-sanSaatBirikik).toFixed(0)+' sa';
+
+  // Son girişler
+  const sonGirisler=kuyular.slice(0,5);
+  document.getElementById('d_son_girisler').innerHTML=sonGirisler.length?
+    sonGirisler.map(k=>`<div class="hist-item"><div><div class="hist-date">${fmtDate(k.tarih)}</div><div class="hist-detail">${k.not||'—'}</div></div><div class="hist-val">${k.adet} kuyu</div></div>`).join('')
+    :'<div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz giriş yok</div>';
+
+  // ---- KUYU SCREEN ----
+  v('k_bugun_top',bugun);
+  v('k_bu_ay',buAy);
+  v('k_gun_ort',gunOrt);
+  v('k_ay_ort',ayOrt);
+  document.getElementById('k_gecmis_count').textContent='('+kuyular.length+' gün)';
+  document.getElementById('k_gecmis_list').innerHTML=kuyular.length?
+    kuyular.map(k=>`<div class="hist-item"><div><div class="hist-date">${fmtDate(k.tarih)}</div><div class="hist-detail">${k.not||'—'}</div></div><div style="display:flex;align-items:center;gap:8px;"><div class="hist-val">${k.adet} kuyu</div><button onclick="kuyuSil('${k.tarih}')" style="background:var(--red2);border:none;border-radius:6px;padding:4px 8px;color:var(--red);font-size:.68rem;cursor:pointer;">Sil</button></div></div>`).join('')
+    :'<div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz kayıt yok</div>';
+
+  // ---- SİLO SCREEN ----
+  const siloSifir = DB.get('silo_sifirli', false); // proje tamamlanınca sıfırlanmış mı
+  const siloGosterGiren = siloSifir ? 0 : toplamGiren;
+  const siloGosterHarcanan = siloSifir ? 0 : harcanan;
+  const siloGosterKalan = siloSifir ? 0 : kalan;
+  const siloGosterPct = siloSifir ? 0 : siloPct;
+  const projeCimento = hedefKuyu * kuyuCimento / 1000;
+
+  document.getElementById('s_toplam_giren').textContent = siloGosterGiren + ' t';
+  document.getElementById('s_harcanan').textContent = siloGosterHarcanan + ' t';
+  document.getElementById('s_kalan').textContent = siloGosterKalan + ' t';
+  document.getElementById('s_kapasite').textContent = projeCimento.toFixed(1) + ' t';
+  document.getElementById('s_silo_pct').textContent = siloGosterPct + '%';
+  const sFill = document.getElementById('s_silo_fill');
+  sFill.style.height = Math.max(0, siloGosterPct) + '%';
+  sFill.className = 'silo-fill ' + (siloGosterPct > 30 ? 'green' : siloGosterPct > 10 ? 'amber' : 'red');
+  document.getElementById('s_proje_hedef').textContent = projeCimento.toFixed(1) + ' t';
+  document.getElementById('s_kuyu_basi').textContent = kuyuCimento + ' kg';
+  const butcePct = projeCimento > 0 ? Math.min(100, Math.round((siloGosterHarcanan / projeCimento) * 100)) : 0;
+  document.getElementById('s_butce_pct').textContent = '%' + butcePct;
+  document.getElementById('s_butce_bar').style.width = butcePct + '%';
+
+  // Silo tamamlandı banner
+  const siloTamamBanner = document.getElementById('silo_tamamlandi_banner');
+  if(siloTamamBanner) siloTamamBanner.style.display = siloSifir ? 'flex' : 'none';
+
+  document.getElementById('s_gecmis_list').innerHTML = (!siloSifir && silo.length) ?
+    silo.map(s => `<div class="hist-item"><div><div class="hist-date">${fmtDate(s.tarih)}</div><div class="hist-detail">${s.not || '—'}</div></div><div class="hist-val">+${s.miktar}t</div></div>`).join('')
+    : '<div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">' + (siloSifir ? 'Proje tamamlandı, yeni proje için hazır.' : 'Henüz yükleme yok') + '</div>';
+
+  // ---- BAKIM SCREEN ----
+  // Aralık input'larını doldur
+  const genSaVal=getGenSa(), sanSaVal=getSanSa();
+  const genAralikEl=document.getElementById('gen_aralik_input');
+  const sanAralikEl=document.getElementById('san_aralik_input');
+  if(genAralikEl && !genAralikEl.matches(':focus')) genAralikEl.value=genSaVal;
+  if(sanAralikEl && !sanAralikEl.matches(':focus')) sanAralikEl.value=sanSaVal;
+  // Kuyu eşdeğeri
+  const genKuyuEq=Math.round(genSaVal*6);
+  const sanKuyuEq=Math.round(sanSaVal*6);
+  v('b_gen_kuyu_eq','≈ '+genKuyuEq+' kuyu');
+  v('b_san_kuyu_eq','≈ '+sanKuyuEq+' kuyu');
+  v('b_gen_sub','Her '+genSaVal+' saatte bir bakım');
+  v('b_san_sub','Her '+sanSaVal+' saatte bir bakım');
+
+  document.getElementById('b_gen_saat').textContent=genSaatBirikik.toFixed(1)+' sa';
+  document.getElementById('b_san_saat').textContent=sanSaatBirikik.toFixed(1)+' sa';
+  document.getElementById('b_gen_pct').textContent=genPct+'%';
+  document.getElementById('b_san_pct').textContent=sanPct+'%';
+  document.getElementById('b_gen_next').textContent='Kalan: '+(getGenSa()-genSaatBirikik).toFixed(0)+' saat';
+  document.getElementById('b_san_next').textContent='Kalan: '+(getSanSa()-sanSaatBirikik).toFixed(0)+' saat';
+
+  const genBar=document.getElementById('b_gen_bar');
+  genBar.style.width=genPct+'%';
+  genBar.className='progress-bar '+(genPct<70?'green':genPct<90?'amber':'red');
+  const sanBar=document.getElementById('b_san_bar');
+  sanBar.style.width=sanPct+'%';
+  sanBar.className='progress-bar '+(sanPct<70?'green':sanPct<90?'amber':'red');
+
+  // Renk uyarı kartları
+  document.getElementById('gen_card').style.borderColor=genPct>=100?'rgba(255,79,90,0.4)':genPct>=85?'rgba(245,166,35,0.4)':'var(--border)';
+  document.getElementById('san_card').style.borderColor=sanPct>=100?'rgba(255,79,90,0.4)':sanPct>=85?'rgba(245,166,35,0.4)':'var(--border)';
+
+  const genBakimlar=bakimlar.filter(b=>b.tip==='gen');
+  const sanBakimlar=bakimlar.filter(b=>b.tip==='san');
+  document.getElementById('b_gen_son_tarih').textContent=genBakimlar.length?fmtDate(genBakimlar[genBakimlar.length-1].tarih):'—';
+  document.getElementById('b_san_son_tarih').textContent=sanBakimlar.length?fmtDate(sanBakimlar[sanBakimlar.length-1].tarih):'—';
+  document.getElementById('b_gen_toplam').textContent=genBakimlar.length+' bakım';
+  document.getElementById('b_san_toplam').textContent=sanBakimlar.length+' bakım';
+
+  const tumBakimlar=[...bakimlar].sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  document.getElementById('b_gecmis').innerHTML=tumBakimlar.length?
+    tumBakimlar.map(b=>`<div class="hist-item"><div><div class="hist-date">${fmtDate(b.tarih)}</div><div class="hist-detail">${b.tip==='gen'?'⚡ Jeneratör':'🏭 Santral'}</div></div><div><span class="badge ${b.tip==='gen'?'blue':'amber'}">Bakım Yapıldı</span></div></div>`).join('')
+    :'<div style="text-align:center;color:var(--w40);padding:20px;font-size:.8rem;">Henüz bakım yapılmadı</div>';
+
+  // ---- PROJE SCREEN ----
+  // Form alanları otomatik doldurulmaz — kullanıcı yeni proje girerken temiz kalır
+  // Sadece bitiş tarihi bilgi satırını güncelle
+  const p=DB.get('proje',{});
+  document.getElementById('p_bitis').value=p.bitis||'';
+  const bitisGoster=document.getElementById('p_bitis_goster');
+  if(bitisGoster) bitisGoster.textContent=p.bitis?('Bitiş: '+fmtDate(p.bitis)):'';
+}
+
+function v(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+
+// ===================== PDF EXPORT =====================
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const proje=DB.get('proje',{});
+  const kuyular=DB.get('kuyular',[]);
+  const silo=DB.get('silo_yuklemeler',[]);
+  const bakimlar=DB.get('bakimlar',[]);
+  const toplam=kuyular.reduce((s,x)=>s+x.adet,0);
+  const harcanan=+(toplam*(proje.kuyu_cimento||0)/1000).toFixed(3);
+  const toplamGiren=+silo.reduce((s,x)=>s+x.miktar,0).toFixed(3);
+  const kalan=+(toplamGiren-harcanan).toFixed(3);
+  const sonGenKuyu=DB.get('son_gen_bakim_kuyu',0);
+  const sonSanKuyu=DB.get('son_san_bakim_kuyu',0);
+  const genSaatBirikik=genSaat(toplam-sonGenKuyu);
+  const sanSaatBirikik=sanSaat(toplam-sonSanKuyu);
+
+  // ---- Başlık ----
+  doc.setFillColor(7,28,18);
+  doc.rect(0,0,210,40,'F');
+  doc.setTextColor(30,216,133);
+  doc.setFontSize(18);doc.setFont('helvetica','bold');
+  doc.text('DSM SAHA TAKİP RAPORU',105,16,{align:'center'});
+  doc.setFontSize(9);doc.setTextColor(255,255,255);
+  doc.text((proje.ad||'—')+' | '+(proje.lokasyon||'—'),105,24,{align:'center'});
+  doc.text('Rapor Tarihi: '+new Date().toLocaleDateString('tr-TR'),105,31,{align:'center'});
+
+  let y=50;
+  const sectionTitle=(txt)=>{
+    doc.setFillColor(13,42,26);doc.rect(14,y-5,182,8,'F');
+    doc.setTextColor(30,216,133);doc.setFontSize(10);doc.setFont('helvetica','bold');
+    doc.text(txt,16,y);y+=8;
+    doc.setTextColor(50,50,50);doc.setFont('helvetica','normal');
+  };
+  const row=(label,val,bold=false)=>{
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);doc.text(label,18,y);
+    doc.setFont('helvetica',bold?'bold':'normal');doc.setTextColor(30,30,30);doc.text(String(val),110,y);
+    y+=6;
+  };
+
+  // Proje Bilgileri
+  sectionTitle('PROJE BİLGİLERİ');
+  row('Proje Adı:',proje.ad||'—');
+  row('Lokasyon:',proje.lokasyon||'—');
+  row('Başlangıç:',fmtDate(proje.baslangic));
+  row('Tahmini Bitiş:',fmtDate(proje.bitis));
+  row('Planlanan Toplam Kuyu:',proje.toplam_kuyu||0);
+  row('Kuyu Derinliği:',+(proje.derinlik||0)+' m');
+  row('Kuyu Çapı:',+(proje.cap||0)+' m');
+  y+=4;
+
+  // İlerleme
+  sectionTitle('KUYU İLERLEMESİ');
+  row('Toplam Yapılan Kuyu:',toplam,true);
+  row('Hedef Kuyu:',proje.toplam_kuyu||0);
+  row('İlerleme:','%'+((proje.toplam_kuyu>0?((toplam/(proje.toplam_kuyu))*100):0).toFixed(1)));
+  const gunler=[...new Set(kuyular.map(x=>x.tarih))].length||1;
+  row('Günlük Ortalama:',Math.round(toplam/gunler)+' kuyu/gün');
+  y+=4;
+
+  // Çimento & Silo
+  sectionTitle('ÇİMENTO & SİLO');
+  row('Kuyu Başı Çimento:',+(proje.kuyu_cimento||0)+' kg');
+  row('Toplam Harcanan Çimento:',harcanan+' ton',true);
+  row('Siloya Giren (Toplam):',toplamGiren+' ton');
+  row('Siloda Kalan:',kalan+' ton',true);
+  row('Proje Çimento Hedefi:',+((proje.toplam_kuyu||0)*(proje.kuyu_cimento||0)/1000).toFixed(1)+' ton');
+  y+=4;
+
+  // Ekipman
+  sectionTitle('EKİPMAN & BAKIM');
+  row('Jeneratör Toplam Çalışma:',genSaat(toplam).toFixed(1)+' saat');
+  row('Jeneratör Mevcut Döngü:',genSaatBirikik.toFixed(1)+' / '+getGenSa()+' saat');
+  row('Santral Toplam Çalışma:',sanSaat(toplam).toFixed(1)+' saat');
+  row('Santral Mevcut Döngü:',sanSaatBirikik.toFixed(1)+' / '+getSanSa()+' saat');
+  const genBakimlar=bakimlar.filter(b=>b.tip==='gen');
+  const sanBakimlar=bakimlar.filter(b=>b.tip==='san');
+  row('Toplam Jeneratör Bakımı:',genBakimlar.length+' kez');
+  row('Toplam Santral Bakımı:',sanBakimlar.length+' kez');
+  y+=4;
+
+  // Günlük Kuyu Özeti
+  if(kuyular.length>0&&y<230){
+    sectionTitle('GÜNLÜK KUYU ÖZETI (Son 20 Gün)');
+    const cols=[14,60,100,150];
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
+    ['Tarih','Kuyu Adedi','Not','Toplam Çimento'].forEach((h,i)=>doc.text(h,cols[i],y));
+    y+=4;doc.setLineWidth(0.3);doc.setDrawColor(200,200,200);doc.line(14,y,196,y);y+=3;
+    doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);
+    kuyular.slice(0,20).forEach(k=>{
+      if(y>270){doc.addPage();y=20;}
+      doc.text(fmtDate(k.tarih),cols[0],y);
+      doc.text(String(k.adet),cols[1],y);
+      doc.text((k.not||'—').substring(0,20),cols[2],y);
+      doc.text(+(k.adet*(proje.kuyu_cimento||0)/1000).toFixed(3)+' t',cols[3],y);
+      y+=5;
+    });
+  }
+
+  // Footer
+  const pageCount=doc.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFontSize(8);doc.setTextColor(150,150,150);
+    doc.text('DSM Saha Takip | Sayfa '+i+'/'+pageCount,105,290,{align:'center'});
+  }
+
+  doc.save((proje.ad||'DSM')+'_Rapor_'+today()+'.pdf');
+  showToast('PDF indiriliyor...');
+}
+
+// ===================== PROJE DETAY MODAL =====================
+function projeDetayAc(){
+  const p=DB.get('proje',{});
+  // Özet grid oluştur
+  const satirlar=[
+    ['Proje Adı', p.ad||'—'],
+    ['Ada / Parsel', p.lokasyon||'—'],
+    ['Başlangıç', fmtDate(p.baslangic)],
+    ['Bitiş', p.bitis?fmtDate(p.bitis):'Devam ediyor'],
+    ['Toplam Kuyu', (p.toplam_kuyu||0)+' adet'],
+    ['Kuyu Başı Çimento', (p.kuyu_cimento||0)+' kg'],
+    ['Proje Çimento', ((p.toplam_kuyu||0)*(p.kuyu_cimento||0)/1000).toFixed(1)+' ton'],
+    ['Kuyu Derinliği', (p.derinlik||0)+' m'],
+    ['Kuyu Çapı', (p.cap||0)+' m'],
+    ['w/c Oranı', p.wc||'—'],
+    ['Silo Kapasitesi', (p.silo_kapasite||0)+' ton'],
+  ];
+  document.getElementById('modal_ozet_grid').innerHTML=satirlar.map(([lbl,val])=>`
+    <div style="background:var(--w10);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:.65rem;color:var(--w40);margin-bottom:3px;">${lbl}</div>
+      <div style="font-size:.85rem;font-weight:600;color:var(--white);">${val}</div>
+    </div>`).join('');
+  // Özet alanı göster, düzenleme alanı gizle
+  document.getElementById('modal_ozet_area').style.display='block';
+  document.getElementById('modal_duzenle_area').style.display='none';
+  document.getElementById('projeModal').classList.add('open');
+}
+
+function projeModalKapat(){
+  document.getElementById('projeModal').classList.remove('open');
+}
+
+function modalDuzenleAc(){
+  const p=DB.get('proje',{});
+  document.getElementById('m_ad').value=p.ad||'';
+  document.getElementById('m_lokasyon').value=p.lokasyon||'';
+  document.getElementById('m_baslangic').value=p.baslangic||'';
+  document.getElementById('m_toplam_kuyu').value=p.toplam_kuyu||'';
+  document.getElementById('m_kuyu_cimento').value=p.kuyu_cimento||'';
+  document.getElementById('m_derinlik').value=p.derinlik||'';
+  document.getElementById('m_cap').value=p.cap||'';
+  document.getElementById('m_wc').value=p.wc||'';
+  document.getElementById('m_silo_kapasite').value=p.silo_kapasite||'';
+  document.getElementById('modal_ozet_area').style.display='none';
+  document.getElementById('modal_duzenle_area').style.display='block';
+  modalHesapla();
+}
+
+function modalDuzenleKapat(){
+  document.getElementById('modal_ozet_area').style.display='block';
+  document.getElementById('modal_duzenle_area').style.display='none';
+}
+
+function modalHesapla(){
+  const kuyu=parseInt(document.getElementById('m_toplam_kuyu').value)||0;
+  const cimento=parseInt(document.getElementById('m_kuyu_cimento').value)||0;
+  const siloKg=kuyu*cimento;
+  const onizleme=document.getElementById('modal_hesap_onizleme');
+  if(siloKg>0){
+    document.getElementById('modal_silo_hesap').textContent=
+      kuyu+' × '+cimento+' kg = '+siloKg.toLocaleString('tr-TR')+' kg ('+
+      (siloKg/1000).toFixed(3)+' ton)';
+    onizleme.style.display='block';
+  } else {
+    onizleme.style.display='none';
+  }
+}
+
+function modalKaydet(){
+  const mevcutP=DB.get('proje',{});
+  const p={
+    ad: document.getElementById('m_ad').value||mevcutP.ad||'',
+    lokasyon: document.getElementById('m_lokasyon').value||mevcutP.lokasyon||'',
+    baslangic: document.getElementById('m_baslangic').value||mevcutP.baslangic||'',
+    bitis: mevcutP.bitis||'',
+    toplam_kuyu: parseInt(document.getElementById('m_toplam_kuyu').value)||mevcutP.toplam_kuyu||0,
+    derinlik: parseFloat(document.getElementById('m_derinlik').value)||mevcutP.derinlik||0,
+    cap: parseFloat(document.getElementById('m_cap').value)||mevcutP.cap||0,
+    kuyu_cimento: parseInt(document.getElementById('m_kuyu_cimento').value)||mevcutP.kuyu_cimento||0,
+    silo_kapasite: parseFloat(document.getElementById('m_silo_kapasite').value)||mevcutP.silo_kapasite||0,
+    wc: parseFloat(document.getElementById('m_wc').value)||mevcutP.wc||0.6,
+  };
+  DB.set('proje',p);
+  document.getElementById('topProje').textContent=p.ad||'DSM Saha Takip';
+  showToast('Proje güncellendi ✓');
+  refreshAll();
+  // Geri özet görünümüne dön
+  projeDetayAc();
+}
+
+// Modalın dışına tıklayınca kapat
+document.getElementById('projeModal').addEventListener('click',function(e){
+  if(e.target===this) projeModalKapat();
+});
+
+
+function yedekAl(){
+  const anahtarlar=['kuyular','silo_yuklemeler','bakimlar','proje','son_gen_bakim_kuyu','son_san_bakim_kuyu','tamamlanan_projeler','gen_bakim_sa','san_bakim_sa','silo_sifirli'];
+  const yedek={};
+  anahtarlar.forEach(k=>{const v=localStorage.getItem('dsm_'+k);if(v)yedek[k]=JSON.parse(v);});
+  yedek._tarih=new Date().toISOString();
+  yedek._versiyon='1.0';
+  const blob=new Blob([JSON.stringify(yedek,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const proje=DB.get('proje',{});
+  a.href=url;
+  a.download='DSM_Yedek_'+(proje.ad||'Proje')+'_'+today()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Yedek dosyası indirildi ✓');
+}
+
+function yedekYukle(e){
+  const dosya=e.target.files[0];
+  if(!dosya) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const yedek=JSON.parse(ev.target.result);
+      if(!confirm('Mevcut veriler silinip yedek yüklenecek. Emin misiniz?'))return;
+      const anahtarlar=['kuyular','silo_yuklemeler','bakimlar','proje','son_gen_bakim_kuyu','son_san_bakim_kuyu','tamamlanan_projeler','gen_bakim_sa','san_bakim_sa','silo_sifirli'];
+      anahtarlar.forEach(k=>{
+        if(yedek[k]!==undefined) localStorage.setItem('dsm_'+k,JSON.stringify(yedek[k]));
+      });
+      showToast('Yedek başarıyla yüklendi ✓');
+      setTimeout(()=>location.reload(),1200);
+    }catch(err){
+      showToast('Geçersiz yedek dosyası!','red');
+    }
+  };
+  reader.readAsText(dosya);
+  e.target.value='';
+}
+
+// ===================== INIT =====================
+window.onload=function(){
+  document.getElementById('k_tarih').value=today();
+  document.getElementById('s_tarih').value=today();
+  refreshAll();
+  checkAlerts();
+};
+</script>
+</body>
+</html>
