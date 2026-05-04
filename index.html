@@ -325,6 +325,9 @@ select option{background:#0d1428;color:#fff;}
       <!-- MAİNT ALERT -->
       <div id="maint-alert-panel"></div>
       <div id="santral-alert-panel"></div>
+      <div id="komp-alert-panel"></div>
+      <div id="pompa-alert-panel"></div>
+      <div id="mikser-alert-panel"></div>
 
       <div class="stitle">Aktif Proje</div>
       <div id="d-last-proj"></div>
@@ -490,6 +493,68 @@ select option{background:#0d1428;color:#fff;}
       <div id="santral-status-readonly" style="margin-bottom:14px;padding:10px 14px;background:var(--surface);border:none;border-radius:16px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
       <div class="divider"></div>
 
+      <div class="divider"></div>
+
+      <!-- ═══ KOMPRESÖR BAKIM ═══ -->
+      <div class="stitle">💨 Kompresör Bakım Zamanı</div>
+      <div class="bcard admin-only" style="margin-bottom:14px;display:none;">
+        <div class="frow">
+          <div class="fg" style="margin-bottom:0;">
+            <label>Mevcut Saat (h)</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="number" id="komp-current" placeholder="örn: 450" inputmode="numeric" oninput="saveKompSettings()" style="flex:1;">
+              <button class="btn btn-s" onclick="addKompHours(-1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;background:var(--surface3);">−</button>
+              <button class="btn btn-p" onclick="addKompHours(1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;">+</button>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:0;"><label>Son Bakım Saati (h)</label><input type="number" id="komp-last" placeholder="örn: 400" inputmode="numeric" oninput="saveKompSettings()"></div>
+        </div>
+        <div class="fg" style="margin-top:10px;margin-bottom:0;"><label>Bakım Aralığı (her kaç saatte bir)</label><input type="number" id="komp-interval" placeholder="örn: 250" inputmode="numeric" oninput="saveKompSettings()"></div>
+        <div id="komp-status" style="margin-top:10px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      </div>
+      <div id="komp-status-readonly" style="margin-bottom:14px;padding:10px 14px;background:var(--surface);border:none;border-radius:16px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      <div class="divider"></div>
+
+      <!-- ═══ POMPA BAKIM ═══ -->
+      <div class="stitle">💧 Pompa Bakım Zamanı</div>
+      <div class="bcard admin-only" style="margin-bottom:14px;display:none;">
+        <div class="frow">
+          <div class="fg" style="margin-bottom:0;">
+            <label>Mevcut Saat (h)</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="number" id="pompa-current" placeholder="örn: 300" inputmode="numeric" oninput="savePompaSettings()" style="flex:1;">
+              <button class="btn btn-s" onclick="addPompaHours(-1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;background:var(--surface3);">−</button>
+              <button class="btn btn-p" onclick="addPompaHours(1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;">+</button>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:0;"><label>Son Bakım Saati (h)</label><input type="number" id="pompa-last" placeholder="örn: 250" inputmode="numeric" oninput="savePompaSettings()"></div>
+        </div>
+        <div class="fg" style="margin-top:10px;margin-bottom:0;"><label>Bakım Aralığı (her kaç saatte bir)</label><input type="number" id="pompa-interval" placeholder="örn: 150" inputmode="numeric" oninput="savePompaSettings()"></div>
+        <div id="pompa-status" style="margin-top:10px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      </div>
+      <div id="pompa-status-readonly" style="margin-bottom:14px;padding:10px 14px;background:var(--surface);border:none;border-radius:16px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      <div class="divider"></div>
+
+      <!-- ═══ MİKSER BAKIM ═══ -->
+      <div class="stitle">🔄 Mikser Bakım Zamanı</div>
+      <div class="bcard admin-only" style="margin-bottom:14px;display:none;">
+        <div class="frow">
+          <div class="fg" style="margin-bottom:0;">
+            <label>Mevcut Saat (h)</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="number" id="mikser-current" placeholder="örn: 180" inputmode="numeric" oninput="saveMikserSettings()" style="flex:1;">
+              <button class="btn btn-s" onclick="addMikserHours(-1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;background:var(--surface3);">−</button>
+              <button class="btn btn-p" onclick="addMikserHours(1)" style="padding:0;width:36px;height:36px;font-size:1.1rem;flex-shrink:0;border-radius:50%;">+</button>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:0;"><label>Son Bakım Saati (h)</label><input type="number" id="mikser-last" placeholder="örn: 100" inputmode="numeric" oninput="saveMikserSettings()"></div>
+        </div>
+        <div class="fg" style="margin-top:10px;margin-bottom:0;"><label>Bakım Aralığı (her kaç saatte bir)</label><input type="number" id="mikser-interval" placeholder="örn: 100" inputmode="numeric" oninput="saveMikserSettings()"></div>
+        <div id="mikser-status" style="margin-top:10px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      </div>
+      <div id="mikser-status-readonly" style="margin-bottom:14px;padding:10px 14px;background:var(--surface);border:none;border-radius:16px;font-size:.72rem;font-weight:600;color:var(--text2);"></div>
+      <div class="divider"></div>
+
       <div class="stitle">⚙ Piston Keçe Değişimi</div>
       <div class="bcard admin-only" style="display:none;">
         <div class="frow">
@@ -652,20 +717,26 @@ function fbPoll() {
       var np = data.projects || [];
       var nr = data.records  || [];
       var nd = data.degisim  || [];
-      var nm = data.maint    || {current:0,last:0,interval:200};
-      var ns = data.santral  || {current:0,last:0,interval:200};
+      var nm  = data.maint    || {current:0,last:0,interval:200};
+      var ns  = data.santral  || {current:0,last:0,interval:200};
+      var nk  = data.komp     || {current:0,last:0,interval:250};
+      var npo = data.pompa    || {current:0,last:0,interval:150};
+      var nmi = data.mikser   || {current:0,last:0,interval:100};
       var fbStr = JSON.stringify(data);
       if (fbStr === lastFbData) return;
       lastFbData = fbStr;
       if(np.length === 0 && nr.length === 0 && projects.length > 0) {
         fbSave(); return;
       }
-      projects=np; dailyRecords=nr; degisimRecords=nd; maintSettings=nm; santralSettings=ns;
+      projects=np; dailyRecords=nr; degisimRecords=nd; maintSettings=nm; santralSettings=ns; kompSettings=nk; pompaSettings=npo; mikserSettings=nmi;
       localStorage.setItem('dsm_projects', JSON.stringify(projects));
       localStorage.setItem('dsm_records',  JSON.stringify(dailyRecords));
       localStorage.setItem('dsm_degisim',  JSON.stringify(degisimRecords));
       localStorage.setItem('dsm_maint',    JSON.stringify(maintSettings));
       localStorage.setItem('dsm_santral',  JSON.stringify(santralSettings));
+      localStorage.setItem('dsm_komp',    JSON.stringify(kompSettings));
+      localStorage.setItem('dsm_pompa',   JSON.stringify(pompaSettings));
+      localStorage.setItem('dsm_mikser',  JSON.stringify(mikserSettings));
       if(mc) mc.value = maintSettings.current !== undefined ? maintSettings.current : 0;
       if(ml) ml.value = maintSettings.last !== undefined ? maintSettings.last : 0;
       if(mi) mi.value = maintSettings.interval !== undefined ? maintSettings.interval : 200;
@@ -690,7 +761,10 @@ function fbSave(callback) {
       records:  dailyRecords,
       degisim:  degisimRecords,
       maint:    maintSettings,
-      santral:  santralSettings
+      santral:  santralSettings,
+      komp:     kompSettings,
+      pompa:    pompaSettings,
+      mikser:   mikserSettings
     })
   }).then(function(){ if(callback) callback(); })
     .catch(function(e){ console.log('Firebase save error:',e); if(callback) callback(); });
@@ -707,8 +781,11 @@ function showSyncStatus(state, msg) {
 var projects       = JSON.parse(localStorage.getItem('dsm_projects')||'[]');
 var dailyRecords   = JSON.parse(localStorage.getItem('dsm_records') ||'[]');
 var degisimRecords = JSON.parse(localStorage.getItem('dsm_degisim')||'[]');
-var maintSettings  = JSON.parse(localStorage.getItem('dsm_maint')  ||'{"current":0,"last":0,"interval":200}');
-var santralSettings = JSON.parse(localStorage.getItem('dsm_santral')||'{"current":0,"last":0,"interval":200}');
+var maintSettings   = JSON.parse(localStorage.getItem('dsm_maint')   ||'{"current":0,"last":0,"interval":200}');
+var santralSettings = JSON.parse(localStorage.getItem('dsm_santral') ||'{"current":0,"last":0,"interval":200}');
+var kompSettings    = JSON.parse(localStorage.getItem('dsm_komp')    ||'{"current":0,"last":0,"interval":250}');
+var pompaSettings   = JSON.parse(localStorage.getItem('dsm_pompa')   ||'{"current":0,"last":0,"interval":150}');
+var mikserSettings  = JSON.parse(localStorage.getItem('dsm_mikser')  ||'{"current":0,"last":0,"interval":100}');
 var chartMode = 'week';
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -718,6 +795,15 @@ document.addEventListener('DOMContentLoaded', function(){
   if(maintSettings.interval)document.getElementById('maint-interval').value=maintSettings.interval;
   if(santralSettings.current) document.getElementById('santral-current').value=santralSettings.current;
   if(santralSettings.last)    document.getElementById('santral-last').value=santralSettings.last;
+  if(kompSettings.current)  document.getElementById('komp-current').value=kompSettings.current;
+  if(kompSettings.last)     document.getElementById('komp-last').value=kompSettings.last;
+  if(kompSettings.interval) document.getElementById('komp-interval').value=kompSettings.interval;
+  if(pompaSettings.current)  document.getElementById('pompa-current').value=pompaSettings.current;
+  if(pompaSettings.last)     document.getElementById('pompa-last').value=pompaSettings.last;
+  if(pompaSettings.interval) document.getElementById('pompa-interval').value=pompaSettings.interval;
+  if(mikserSettings.current)  document.getElementById('mikser-current').value=mikserSettings.current;
+  if(mikserSettings.last)     document.getElementById('mikser-last').value=mikserSettings.last;
+  if(mikserSettings.interval) document.getElementById('mikser-interval').value=mikserSettings.interval;
   if(santralSettings.interval)document.getElementById('santral-interval').value=santralSettings.interval;
   updateSantralStatus();
   updateMaintStatus();
@@ -972,6 +1058,9 @@ function save(){
   localStorage.setItem('dsm_degisim',  JSON.stringify(degisimRecords));
   localStorage.setItem('dsm_maint',    JSON.stringify(maintSettings));
   localStorage.setItem('dsm_santral',  JSON.stringify(santralSettings));
+  localStorage.setItem('dsm_komp',    JSON.stringify(kompSettings));
+  localStorage.setItem('dsm_pompa',   JSON.stringify(pompaSettings));
+  localStorage.setItem('dsm_mikser',  JSON.stringify(mikserSettings));
   // Firebase REST API ile kaydet
   fbSave();
 }
@@ -1109,6 +1198,64 @@ function updateSantralStatus(){
   if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';
   checkSantralAlert();
 }
+// ─── KOMPRESÖR BAKIM ────────────────────────────────────────────
+function addKompHours(d){var c=parseFloat(document.getElementById('komp-current').value)||0;c=Math.max(0,Math.round(c+d));document.getElementById('komp-current').value=c;kompSettings.current=c;save();}
+function saveKompSettings(){kompSettings={current:parseFloat(document.getElementById('komp-current').value)||0,last:parseFloat(document.getElementById('komp-last').value)||0,interval:parseFloat(document.getElementById('komp-interval').value)||250};save();}
+function updateKompStatus(){
+  var cur=kompSettings.current||0,last=kompSettings.last||0,intv=kompSettings.interval||250;
+  var el=document.getElementById('komp-status'),ro=document.getElementById('komp-status-readonly');
+  var nextAt=last+intv,rem=nextAt-cur,html='';
+  if(!cur&&!last){html='';if(ro)ro.textContent='Kompresör saati girilmemiş.';}
+  else if(rem<=0){html='<span style="color:var(--red)">⚠ Bakım zamanı geçti! '+Math.abs(rem).toFixed(0)+' saat gecikme</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else if(rem<=30){html='<span style="color:var(--orange)">⚠ Bakım yaklaşıyor: '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else{html='<span style="color:var(--green)">✓ Normal — '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  if(el)el.innerHTML=html;
+  checkMachineAlert('komp-alert-panel','💨','Kompresör',kompSettings,30);
+}
+// ─── POMPA BAKIM ─────────────────────────────────────────────────
+function addPompaHours(d){var c=parseFloat(document.getElementById('pompa-current').value)||0;c=Math.max(0,Math.round(c+d));document.getElementById('pompa-current').value=c;pompaSettings.current=c;save();}
+function savePompaSettings(){pompaSettings={current:parseFloat(document.getElementById('pompa-current').value)||0,last:parseFloat(document.getElementById('pompa-last').value)||0,interval:parseFloat(document.getElementById('pompa-interval').value)||150};save();}
+function updatePompaStatus(){
+  var cur=pompaSettings.current||0,last=pompaSettings.last||0,intv=pompaSettings.interval||150;
+  var el=document.getElementById('pompa-status'),ro=document.getElementById('pompa-status-readonly');
+  var nextAt=last+intv,rem=nextAt-cur,html='';
+  if(!cur&&!last){html='';if(ro)ro.textContent='Pompa saati girilmemiş.';}
+  else if(rem<=0){html='<span style="color:var(--red)">⚠ Bakım zamanı geçti! '+Math.abs(rem).toFixed(0)+' saat gecikme</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else if(rem<=20){html='<span style="color:var(--orange)">⚠ Bakım yaklaşıyor: '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else{html='<span style="color:var(--green)">✓ Normal — '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  if(el)el.innerHTML=html;
+  checkMachineAlert('pompa-alert-panel','💧','Pompa',pompaSettings,20);
+}
+// ─── MİKSER BAKIM ────────────────────────────────────────────────
+function addMikserHours(d){var c=parseFloat(document.getElementById('mikser-current').value)||0;c=Math.max(0,Math.round(c+d));document.getElementById('mikser-current').value=c;mikserSettings.current=c;save();}
+function saveMikserSettings(){mikserSettings={current:parseFloat(document.getElementById('mikser-current').value)||0,last:parseFloat(document.getElementById('mikser-last').value)||0,interval:parseFloat(document.getElementById('mikser-interval').value)||100};save();}
+function updateMikserStatus(){
+  var cur=mikserSettings.current||0,last=mikserSettings.last||0,intv=mikserSettings.interval||100;
+  var el=document.getElementById('mikser-status'),ro=document.getElementById('mikser-status-readonly');
+  var nextAt=last+intv,rem=nextAt-cur,html='';
+  if(!cur&&!last){html='';if(ro)ro.textContent='Mikser saati girilmemiş.';}
+  else if(rem<=0){html='<span style="color:var(--red)">⚠ Bakım zamanı geçti! '+Math.abs(rem).toFixed(0)+' saat gecikme</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else if(rem<=15){html='<span style="color:var(--orange)">⚠ Bakım yaklaşıyor: '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  else{html='<span style="color:var(--green)">✓ Normal — '+rem.toFixed(0)+' saat kaldı</span>';if(ro)ro.innerHTML='Mevcut: <b>'+cur+'h</b> &nbsp;·&nbsp; Son Bakım: <b>'+last+'h</b> &nbsp;·&nbsp; Sonraki: <b>'+nextAt+'h</b>';}
+  if(el)el.innerHTML=html;
+  checkMachineAlert('mikser-alert-panel','🔄','Mikser',mikserSettings,15);
+}
+// ─── GENERIC MACHINE ALERT ───────────────────────────────────────
+function checkMachineAlert(panelId,icon,name,settings,warnAt){
+  var el=document.getElementById(panelId);if(!el)return;
+  var cur=settings.current||0,last=settings.last||0,intv=settings.interval||100;
+  if(!cur||!intv){el.innerHTML='';return;}
+  var nextAt=last+intv,rem=nextAt-cur;
+  var navBtn='document.querySelector(".nav-item:nth-child(5)")';
+  if(rem<=0){
+    var gec=Math.abs(rem);
+    el.innerHTML='<div class="maint-alert red"><div class="maint-alert-icon">'+icon+'</div><div class="maint-alert-body"><div class="maint-alert-title">'+name+' Bakımı Geçti! ('+gec.toFixed(0)+' saat gecikme)</div><div class="maint-alert-sub">Mevcut: '+cur+'h — Son bakım: '+last+'h</div></div><button class="maint-alert-btn" onclick="switchTab('degisim','+navBtn+')">Git →</button></div>';
+  } else if(rem<=warnAt){
+    el.innerHTML='<div class="maint-alert"><div class="maint-alert-icon">⚠️</div><div class="maint-alert-body"><div class="maint-alert-title">'+name+' Bakımı Yaklaşıyor ('+rem.toFixed(0)+' saat kaldı)</div><div class="maint-alert-sub">Mevcut: '+cur+'h — Son bakım: '+last+'h</div></div><button class="maint-alert-btn" onclick="switchTab('degisim','+navBtn+')">Git →</button></div>';
+  } else {
+    el.innerHTML='';
+  }
+}
 function refreshAll(){
   populateDropdowns();
   renderProjectList();
@@ -1119,6 +1266,9 @@ function refreshAll(){
   renderComparison();
   updateMaintStatus();
   updateSantralStatus();
+  updateKompStatus();
+  updatePompaStatus();
+  updateMikserStatus();
 }
 
 function switchTab(name, el){
