@@ -287,17 +287,10 @@ select option{background:#0d1428;color:#fff;}
 
   <!-- HEADER -->
   <div class="header">
-    <div class="logo" onclick="logoTap()" style="cursor:pointer;user-select:none;">
-      <h1>DS<span>M</span></h1>
-      <div style="font-size:.46rem;font-weight:600;color:var(--dim);letter-spacing:-.1px;margin-top:1px;line-height:1.2;">Aydın Jeoteknik Müh. Tic. Ltd. Şti.</div>
-    </div>
-    <div class="header-right">
-      <button class="hbtn admin-only" onclick="exportData()">↓ Yedek</button>
-      <label class="hbtn admin-only">↑ Yükle<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label>
-      <button class="hbtn" id="lockBtn" onclick="openAuthModal()" style="font-size:.82rem;padding:7px 10px;display:flex;align-items:center;color:#fff;" title="Giriş yap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg></button>
-      <div id="sync-status" style="display:none;"></div><div class="hdate"><span class="sdot"></span><span id="hDate"></span></div>
-    </div>
-  </div>
+   <div class="logo" onclick="logoTap()" style="cursor:pointer;user-select:none;">
+  <h1>DS<span>M</span></h1>
+  <div style="font-size:.46rem;...">Aydın Jeoteknik Müh. Tic. Ltd. Şti.</div>
+</div>
 
   <!-- MAIN CONTENT -->
   <div class="content" id="mainContent">
